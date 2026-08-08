@@ -434,7 +434,7 @@ body{ font-feature-settings:"cv02","cv03","cv04","ss01"; -webkit-font-smoothing:
 /* Providers sheet */
 .zsheet-scrim{ position:fixed; inset:0; background:rgba(0,0,0,0.5); opacity:0; pointer-events:none; transition:opacity .2s; z-index:50; }
 .zsheet-scrim.open{ opacity:1; pointer-events:all; }
-.zsheet{ position:fixed; top:0; right:0; bottom:0; width:min(440px,94vw);
+.zsheet{ position:fixed; top:0; right:0; bottom:0; width:min(500px,96vw);
   background:var(--z-bg-2); border-left:1px solid var(--z-line-2);
   transform:translateX(100%); transition:transform .24s cubic-bezier(.4,0,.2,1);
   z-index:55; display:flex; flex-direction:column; box-shadow:-16px 0 50px rgba(0,0,0,0.55); }
@@ -442,7 +442,7 @@ body{ font-feature-settings:"cv02","cv03","cv04","ss01"; -webkit-font-smoothing:
 .zsheet-head{ display:flex; align-items:flex-start; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--z-line); }
 .zsheet-x{ display:inline-flex; cursor:pointer; background:none; border:none; color:var(--z-txt-2); }
 .zsheet-x:hover{ color:#fff; }
-.zsheet-body{ flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:14px; }
+.zsheet-body{ flex:1; overflow-y:auto; padding:20px 20px 28px; display:flex; flex-direction:column; gap:18px; }
 
 @keyframes zPulse{ 0%,100%{opacity:1} 50%{opacity:0.45} }
 @keyframes zFadeIn{ from{opacity:0} to{opacity:1} }

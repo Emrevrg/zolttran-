@@ -15,9 +15,12 @@ export function ProvidersSheet({ open, onClose }: { open: boolean; onClose: () =
   const [godotPath, setGodotPath] = useState('godot4');
   const [search, setSearch] = useState('');
 
-  const providers = getAllProviders().filter(
+  const all = getAllProviders();
+  const providers = all.filter(
     (p) => p.authType === 'api-key' && (!search || p.name.toLowerCase().includes(search.toLowerCase())),
   );
+  // Gerçek sayılar — registry'den hesaplanır, sabit/uydurma değil
+  const freeModelCount = all.reduce((n, p) => n + p.models.filter((m) => m.tier === 'free').length, 0);
 
   const save = (id: ProviderID) => {
     const key = keys[id];
@@ -48,7 +51,7 @@ export function ProvidersSheet({ open, onClose }: { open: boolean; onClose: () =
             <div className="flex items-center justify-between">
               <div style={{ flex: 1 }}>
                 <div className="flex items-center gap-1.5" style={{ fontWeight: 600, fontSize: 14 }}><Zap size={15} strokeWidth={1.75} style={{ color: 'var(--z-success)' }} /> FREE MODE</div>
-                <div className="zsm zmuted" style={{ marginTop: 2 }}>API anahtarı olmadan 20+ ücretsiz model, otomatik rotasyon.</div>
+                <div className="zsm zmuted" style={{ marginTop: 2 }}>API anahtarı olmadan {freeModelCount} ücretsiz model, otomatik rotasyon.</div>
                 {freeMode && <div className="zsm flex items-center gap-1" style={{ color: 'var(--z-success)', marginTop: 6 }}><CheckCircle2 size={12} strokeWidth={2} /> Aktif — Maliyet $0.00</div>}
               </div>
               <label className="ztoggle" style={{ flexShrink: 0 }}>
@@ -78,13 +81,13 @@ export function ProvidersSheet({ open, onClose }: { open: boolean; onClose: () =
               placeholder="Ara…" className="zinput" style={{ width: 130, padding: '4px 8px', fontSize: 11 }} />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
             {providers.map((provider) => {
               const status = providerStatuses[provider.id as ProviderID];
               const isTesting = testing === provider.id;
               return (
-                <div key={provider.id} className="glass-muted" style={{ padding: '10px 12px' }}>
-                  <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
+                <div key={provider.id} className="glass-muted" style={{ padding: '14px 15px' }}>
+                  <div className="flex items-center justify-between" style={{ marginBottom: 9 }}>
                     <div className="flex items-center gap-2">
                       <span style={{ fontWeight: 500, fontSize: 13 }}>{provider.name}</span>
                       {provider.hasFreeModels && <span className="zbadge zbadge-free">FREE</span>}
