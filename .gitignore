@@ -1,0 +1,55 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-error.log
+.pnpm-debug.log*
+
+# Build outputs
+extension/dist/
+extension/*.vsix
+extension/.vscode-test/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.uv/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/settings.json
+.vscode/launch.json
+*.swp
+*.swo
+.idea/
+
+# Secrets / Keys
+.env
+.env.local
+*.pem
+*.key
+secrets/
+
+# Logs
+*.log
+logs/
+
+# Godot
+.godot/
+*.import
+export_credentials.cfg
+build/
+
+# Temp files
+*.tmp
+.omniforge_*.gd
