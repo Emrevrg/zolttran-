@@ -2,18 +2,21 @@
  * ProvidersSheet — sağdan açılan tek ayar yüzeyi.
  * Tesana felsefesi: kullanıcı SADECE provider bağlar; gerisini AI halleder.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Zap, FolderCog, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { useStore } from '../store.js';
 import { getAllProviders } from '../../providers/provider-registry.js';
 import type { ProviderID } from '../../types/index.js';
 
 export function ProvidersSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { freeMode, setFreeMode, providerStatuses, postMessage } = useStore();
+  const { freeMode, setFreeMode, providerStatuses, postMessage, godotDetectedPath, godotDetectedVersion } = useStore();
   const [keys, setKeys] = useState<Partial<Record<ProviderID, string>>>({});
   const [testing, setTesting] = useState<ProviderID | null>(null);
   const [godotPath, setGodotPath] = useState('godot4');
   const [search, setSearch] = useState('');
+
+  // Godot otomatik bulunduysa yolu input'a yaz — kullanıcı uğraşmasın
+  useEffect(() => { if (godotDetectedPath) setGodotPath(godotDetectedPath); }, [godotDetectedPath]);
 
   const all = getAllProviders();
   const providers = all.filter(
@@ -71,7 +74,9 @@ export function ProvidersSheet({ open, onClose }: { open: boolean; onClose: () =
               <button className="zbtn zbtn-primary flex-shrink-0" style={{ padding: '6px 14px' }}
                 onClick={() => postMessage({ type: 'set-godot-path', payload: { path: godotPath } })}>Kaydet</button>
             </div>
-            <div className="zxs zmuted" style={{ marginTop: 6 }}>Godot 4.3+ gerekli. PATH'e ekli olmalı veya tam yol girilmeli.</div>
+            {godotDetectedPath
+              ? <div className="zsm flex items-center gap-1" style={{ color: 'var(--z-success)', marginTop: 6 }}><CheckCircle2 size={12} strokeWidth={2} /> Godot {godotDetectedVersion?.split('.').slice(0, 2).join('.') ?? ''} otomatik bulundu — hazır</div>
+              : <div className="zxs zmuted" style={{ marginTop: 6 }}>Otomatik aranır. Bulunamazsa Godot 4.3+ yolunu gir (offline üretim yine de çalışır).</div>}
           </div>
 
           {/* Provider search */}

@@ -23,6 +23,7 @@ import { memoryBank }        from './agent/memory-bank.js';
 import { generateGameOffline, detectGameType } from './agent/offline-generator.js';
 import { taskScheduler }     from './agent/task-scheduler.js';
 import { godotBridge }       from './godot/godot-bridge.js';
+import { locateGodot }       from './godot/godot-locator.js';
 import { projectScaffolder } from './godot/project-scaffolder.js';
 import { deployManager }     from './build/deploy-manager.js';
 import { liveServer }        from './preview/live-server.js';
@@ -62,6 +63,7 @@ export function activate(context: vscode.ExtensionContext): void {
   applyConfig(context);
   registerCommands(context);
   wireGlobalEvents();
+  void autoDetectGodot(context);
 
   // Sidebar webview view provider — UI, ayrı editör sekmesi yerine
   // aktivite çubuğundaki Zolttran panelinde açılır (diğer eklentiler gibi).
@@ -394,9 +396,38 @@ async function handleBuildAll(): Promise<void> {
   post({ type: 'toast', payload: { message: '📦 Tüm build\'ler tamamlandı', type: 'success', duration: 4000 } });
 }
 
+/**
+ * Godot'u otomatik bulur ve ayarlar — kullanıcı yol/entegrasyonla uğraşmasın.
+ * Kullanıcı zaten çalışan özel bir yol girdiyse ona dokunmaz.
+ */
+async function autoDetectGodot(context: vscode.ExtensionContext): Promise<void> {
+  try {
+    const cfg = vscode.workspace.getConfiguration('zolttran');
+    const configured = cfg.get<string>('godotPath', '') || '';
+    const alreadySet = context.globalState.get<string>('zolttran.godotAutoPath');
+    const userSet = configured !== '' && configured !== 'godot4' && configured !== alreadySet;
+
+    const det = locateGodot();
+    if (!det) {
+      logger.info('Godot otomatik bulunamadı. FREE MODE offline üretim yine de çalışır; derleme/önizleme için Godot 4.3+ gerekir.');
+      return;
+    }
+
+    // Kullanıcı elle özel bir yol girdiyse ona dokunma; aksi halde otomatik ayarla
+    if (userSet) { godotBridge.setGodotPath(configured); return; }
+    godotBridge.setGodotPath(det.path);
+    await cfg.update('godotPath', det.path, vscode.ConfigurationTarget.Global);
+    await context.globalState.update('zolttran.godotAutoPath', det.path);
+    logger.info(`Godot otomatik bulundu: ${det.path} (${det.version})`);
+    post({ type: 'godot-detected', payload: { path: det.path, version: det.version } });
+  } catch (err) {
+    logger.warn(`Godot otomatik tespiti başarısız: ${String(err)}`);
+  }
+}
+
 async function connectGodotBridge(): Promise<void> {
   const cfg = vscode.workspace.getConfiguration('zolttran');
-  godotBridge.setGodotPath(cfg.get('godotPath', 'godot4'));
+  godotBridge.setGodotPath(cfg.get<string>('godotPath', '') || 'godot4');
   const method = await godotBridge.connect(getWorkspacePath() ?? '', cfg.get('godotBridgePort', 9876));
   post({ type: 'godot-status', payload: { connected: Boolean(method), method: method ?? undefined } });
   if (method) {

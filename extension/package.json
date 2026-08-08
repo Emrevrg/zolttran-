@@ -2,7 +2,7 @@
   "name": "zolttran",
   "displayName": "Zolttran — AI Game Studio",
   "description": "Hayalindeki oyunu gerçeğe dönüştür. 25 AI sağlayıcı, Godot 4.x entegrasyonu ve cross-platform deploy ile tam AI destekli oyun geliştirme platformu.",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "publisher": "zolttran",
   "license": "Apache-2.0",
   "icon": "resources/icons/zolttran-icon.png",

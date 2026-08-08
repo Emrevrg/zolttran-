@@ -35,6 +35,10 @@ export default function App() {
       case 'build-update':    setBuildResult(msg.payload.result); if (msg.payload.result.status !== 'building') setIsBuildingAll(false); break;
       case 'preview-update':  setPreview(msg.payload.state); break;
       case 'godot-status':    setGodotConnected(msg.payload.connected, msg.payload.method); break;
+      case 'godot-detected':
+        hydrate({ godotDetectedPath: msg.payload.path, godotDetectedVersion: msg.payload.version });
+        addToast({ message: `Godot ${msg.payload.version.split('.').slice(0, 2).join('.')} otomatik bulundu — hazır`, type: 'success', duration: 4000 });
+        break;
       case 'provider-status': setProviderStatus(msg.payload.providerId, msg.payload.status === 'ok' ? 'connected' : 'error'); break;
       case 'toast':           addToast({ message: msg.payload.message, type: msg.payload.type, duration: msg.payload.duration }); break;
       case 'notification':    addToast({ message: msg.payload.message, type: msg.payload.level === 'error' ? 'error' : msg.payload.level === 'warn' ? 'warning' : 'info', duration: 4000 }); break;

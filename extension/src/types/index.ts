@@ -543,6 +543,7 @@ export type ExtensionToWebview =
   | { type: 'preview-update'; payload: { state: PreviewState } }
   | { type: 'provider-status'; payload: { providerId: ProviderID; status: 'ok' | 'error'; error?: string } }
   | { type: 'godot-status'; payload: { connected: boolean; method?: GodotBridgeMethod } }
+  | { type: 'godot-detected'; payload: { path: string; version: string } }
   | { type: 'error'; payload: { message: string; code?: string } }
   | { type: 'notification'; payload: { level: 'info' | 'warn' | 'error'; message: string } }
   | { type: 'toast'; payload: { message: string; type: 'success' | 'error' | 'info' | 'warning'; duration?: number } };
@@ -579,6 +580,8 @@ export interface AppState {
   // Godot
   godotConnected: boolean;
   godotBridgeMethod?: GodotBridgeMethod;
+  godotDetectedPath?: string;
+  godotDetectedVersion?: string;
   currentProject?: GodotProject;
   currentGdd?: GameDesignDocument;
 
