@@ -102,6 +102,7 @@ export interface ChatMessage {
   usage?: TokenUsage;
   toolCalls?: ToolCall[];
   toolCallId?: string;
+  attachments?: Attachment[];
 }
 
 export type ContentPart =
@@ -489,6 +490,20 @@ export interface PreviewState {
 // ---------------------------------------------------------------------------
 
 export type PanelTab = 'chat' | 'agent' | 'builder' | 'deploy' | 'settings';
+
+// Sohbet ekleri — görsel, 3D model veya herhangi bir dosya
+export type AttachmentKind = 'image' | 'model' | 'audio' | 'video' | 'file';
+export interface Attachment {
+  id: string;
+  name: string;
+  kind: AttachmentKind;
+  mime: string;
+  size: number;
+  /** Webview içi objectURL veya data URL (önizleme için) */
+  url: string;
+  /** 3D için format ipucu: glb|gltf|obj|fbx|stf... */
+  ext?: string;
+}
 
 export interface WebviewMessage {
   type: string;

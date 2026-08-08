@@ -173,10 +173,10 @@ async function handleMsg(msg: WebviewToExtension, context: vscode.ExtensionConte
       break;
 
     case 'chat-message': {
-      const { content } = msg.payload;
-      // Add user message immediately
-      post({ type: 'chat-response', payload: { message: { id: crypto.randomUUID(), role: 'user', content, timestamp: Date.now() }, streaming: true } });
-      void orchestrator.handleMessage(content).catch((err) => {
+      const { content, attachments } = msg.payload;
+      // Kullanıcı mesajı webview'de optimistik eklenir; burada sadece işleriz.
+      const suffix = attachments && attachments.length ? `\n\n[Ekler: ${attachments.join(', ')}]` : '';
+      void orchestrator.handleMessage(content + suffix).catch((err) => {
         post({ type: 'error', payload: { message: String(err) } });
       });
       break;
