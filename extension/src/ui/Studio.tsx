@@ -103,15 +103,19 @@ export function Studio({ onOpenDrawer, onOpenProviders }: { onOpenDrawer: () => 
           <Paperclip size={16} strokeWidth={1.75} />
         </button>
         <ModelSelector />
-        <span className="zxs zmuted hidden-sm" style={{ marginLeft: 2 }}>Enter · gönder</span>
+        <span className="zcomposer-hint hidden-sm">
+          {input.length > 0
+            ? <><kbd>↵</kbd> gönder · <kbd>⇧↵</kbd> yeni satır · {input.trim().length} karakter</>
+            : <><kbd>↵</kbd> gönder</>}
+        </span>
         <div className="ml-auto flex items-center gap-1.5">
           <button onClick={() => send(true)} disabled={!canSend}
             className="zbtn zbtn-ghost zsm" title="Tam oyun pipeline'ı olarak kur">
             <Gamepad2 size={14} strokeWidth={1.75} /> Oyunu Kur
           </button>
           <button onClick={() => send(false)} disabled={!canSend}
-            className="zbtn zbtn-primary" title="Gönder" style={{ padding: '7px 10px' }}>
-            <ArrowUp size={16} strokeWidth={2.25} />
+            className={`zsend ${canSend ? 'active' : ''}`} title="Gönder (Enter)">
+            <ArrowUp size={17} strokeWidth={2.5} />
           </button>
         </div>
       </div>

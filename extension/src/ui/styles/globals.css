@@ -505,3 +505,40 @@ body{ font-feature-settings:"cv02","cv03","cv04","ss01"; -webkit-font-smoothing:
 .zicon-btn.active{ color:#fff; background:var(--z-primary-dim); border-color:var(--z-primary-bdr); }
 
 @media (max-width:640px){ .hidden-sm{ display:none; } }
+
+/* =========================================================
+   ZOLTTRAN v5 — Profesyonel, metne duyarlı composer + chat
+   ========================================================= */
+.zcomposer textarea{ overflow-y:auto; scrollbar-width:thin; transition:min-height .12s ease; }
+.zcomposer textarea::-webkit-scrollbar{ width:6px; }
+
+/* Metne duyarlı ipucu */
+.zcomposer-hint{ display:inline-flex; align-items:center; gap:5px; font-size:10.5px; color:var(--z-txt-3); margin-left:2px; }
+.zcomposer-hint kbd{
+  font-family:inherit; font-size:9.5px; line-height:1; padding:2px 5px; border-radius:5px;
+  background:rgba(255,255,255,0.06); border:1px solid var(--z-line-2); color:var(--z-txt-2);
+}
+
+/* Dairesel gönder butonu — metin varken canlanır */
+.zsend{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:32px; height:32px; border-radius:50%; cursor:pointer; border:1px solid var(--z-line-2);
+  background:rgba(255,255,255,0.05); color:var(--z-txt-3); transition:all .16s;
+}
+.zsend.active{
+  background:linear-gradient(135deg,#7c6af7,#22d3ee); color:#fff; border-color:transparent;
+  box-shadow:0 3px 14px rgba(124,106,247,0.5);
+}
+.zsend.active:hover{ filter:brightness(1.1); transform:translateY(-1px); }
+.zsend:disabled{ cursor:not-allowed; }
+
+/* Composer odak halkası biraz daha belirgin */
+.zcomposer:focus-within{ border-color:rgba(124,106,247,0.55); box-shadow:0 0 0 3px rgba(124,106,247,0.12), 0 10px 34px rgba(0,0,0,0.32); }
+
+/* Chat: profesyonel tipografi + hafif gölge */
+.zbubble-ai{ box-shadow:0 1px 0 rgba(255,255,255,0.02) inset; }
+.zbubble .zmd p{ margin-bottom:7px; }
+.zbubble .zmd p:last-child{ margin-bottom:0; }
+.zbubble .zmd pre{ margin:8px 0; border-radius:8px; }
+.zbubble .zmd ol,.zbubble .zmd ul{ margin:6px 0 8px; }
+.zmsgs{ scroll-behavior:smooth; }
