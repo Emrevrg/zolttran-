@@ -959,6 +959,103 @@ func end_turn() -> void:
     },
   },
 
+  adventure: {
+    id: 'adventure',
+    name: 'Adventure',
+    description: 'Exploration-driven adventure with interaction, dialogue and puzzles',
+    thumbnail: 'templates/adventure.png',
+    features: ['Free exploration', 'Interact with objects & NPCs', 'Dialogue', 'Collectibles', 'Doors & keys'],
+    defaultGdd: {
+      gameType: 'adventure',
+      genre: ['adventure', 'exploration', 'story'],
+      targetPlatforms: ['web', 'windows', 'macos', 'linux', 'android', 'ios'],
+      mechanics: [
+        { name: 'Exploration', description: 'Free top-down movement across hand-crafted areas', priority: 'core' },
+        { name: 'Interaction', description: 'Examine and use objects, talk to NPCs', priority: 'core' },
+        { name: 'Inventory', description: 'Pick up items and use them to solve puzzles', priority: 'secondary' },
+        { name: 'Doors & Keys', description: 'Locked areas opened by finding the right item', priority: 'secondary' },
+      ],
+      techRequirements: { physics: '2d', multiplayer: false, saveSystem: true, localisation: true, minGodotVersion: '4.3' },
+    },
+    sceneStructure: [
+      'world/area_01.tscn → Node2D',
+      '  ├── Interactables → Node2D',
+      '  ├── NPCs → Node2D',
+      '  └── Doors → Node2D',
+      'player.tscn → CharacterBody2D',
+      'ui/dialogue.tscn → CanvasLayer',
+      'ui/inventory.tscn → CanvasLayer',
+    ],
+    baseScripts: {
+      'player.gd': `class_name Player
+extends CharacterBody2D
+
+@export var move_speed: float = 120.0
+
+var facing: Vector2 = Vector2.DOWN
+var inventory: Array[String] = []
+
+func _ready() -> void:
+\tadd_to_group("player")
+
+func _physics_process(_delta: float) -> void:
+\tvar input := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+\tif input != Vector2.ZERO:
+\t\tfacing = input.normalized()
+\tvelocity = input * move_speed
+\tmove_and_slide()
+\tif Input.is_action_just_pressed("interact"):
+\t\t_try_interact()
+
+func _try_interact() -> void:
+\tvar point := global_position + facing * 26.0
+\tfor node in get_tree().get_nodes_in_group("interactables"):
+\t\tif node is Node2D and node.global_position.distance_to(point) < 30.0 and node.has_method("interact"):
+\t\t\tnode.interact(self)
+\t\t\treturn
+
+func add_item(item: String) -> void:
+\tinventory.append(item)
+\tprint("[Envanter] +", item)
+
+func has_item(item: String) -> bool:
+\treturn inventory.has(item)
+`,
+      'interactable.gd': `extends Area2D
+## İncelenebilir/toplanabilir nesne. "interactables" grubuna girer.
+
+@export_multiline var message: String = "İlginç bir nesne."
+@export var gives_item: String = ""
+@export var consume_on_use: bool = true
+
+func _ready() -> void:
+\tadd_to_group("interactables")
+
+func interact(player: Node) -> void:
+\tprint("[Nesne] ", message)
+\tif gives_item != "" and player.has_method("add_item"):
+\t\tplayer.add_item(gives_item)
+\tif consume_on_use:
+\t\tqueue_free()
+`,
+      'door.gd': `extends StaticBody2D
+## Kilitli kapı; doğru anahtar varsa açılır.
+
+@export var required_item: String = "key"
+
+func _ready() -> void:
+\tadd_to_group("interactables")
+
+func interact(player: Node) -> void:
+\tif player.has_method("has_item") and player.has_item(required_item):
+\t\tprint("[Kapı] Açıldı!")
+\t\tqueue_free()
+\telse:
+\t\tprint("[Kapı] Kilitli. Gerekli: ", required_item)
+`,
+    },
+  },
+
   custom: {
     id: 'custom',
     name: 'Custom Game',

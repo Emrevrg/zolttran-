@@ -18,6 +18,7 @@ const KEYWORDS: Array<{ type: GameType; words: string[] }> = [
   { type: 'roguelike',     words: ['roguelike', 'rogue', 'zindan', 'dungeon', 'prosedürel', 'permadeath', 'kalıcı ölüm'] },
   { type: 'farm-sim',      words: ['çiftlik', 'farm', 'tarım', 'hasat', 'stardew', 'cozy', 'simülasyon', 'ekim'] },
   { type: 'strategy',      words: ['strateji', 'strategy', 'rts', 'kule savunma', 'tower defense', 'taktik'] },
+  { type: 'adventure',     words: ['macera', 'adventure', 'keşif', 'kesif', 'explore', 'exploration', 'hikaye', 'story', 'bulmaca', 'puzzle', 'point and click'] },
 ];
 
 export function detectGameType(prompt: string): GameType {

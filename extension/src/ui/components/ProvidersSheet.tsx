@@ -2,7 +2,7 @@
  * ProvidersSheet — sağdan açılan tek ayar yüzeyi.
  * Tesana felsefesi: kullanıcı SADECE provider bağlar; gerisini AI halleder.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, Zap, FolderCog, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { useStore } from '../store.js';
 import { getAllProviders } from '../../providers/provider-registry.js';
@@ -12,11 +12,7 @@ export function ProvidersSheet({ open, onClose }: { open: boolean; onClose: () =
   const { freeMode, setFreeMode, providerStatuses, postMessage, godotDetectedPath, godotDetectedVersion } = useStore();
   const [keys, setKeys] = useState<Partial<Record<ProviderID, string>>>({});
   const [testing, setTesting] = useState<ProviderID | null>(null);
-  const [godotPath, setGodotPath] = useState('godot4');
   const [search, setSearch] = useState('');
-
-  // Godot otomatik bulunduysa yolu input'a yaz — kullanıcı uğraşmasın
-  useEffect(() => { if (godotDetectedPath) setGodotPath(godotDetectedPath); }, [godotDetectedPath]);
 
   const all = getAllProviders();
   const providers = all.filter(
@@ -65,18 +61,18 @@ export function ProvidersSheet({ open, onClose }: { open: boolean; onClose: () =
             </div>
           </div>
 
-          {/* Godot path */}
-          <div className="glass-muted" style={{ padding: '12px 14px' }}>
-            <div className="flex items-center gap-1.5" style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}><FolderCog size={14} strokeWidth={1.75} /> Godot Yolu</div>
-            <div className="flex gap-2">
-              <input type="text" value={godotPath} onChange={(e) => setGodotPath(e.target.value)}
-                placeholder="godot4 veya /tam/yol/godot4" className="zinput font-mono" style={{ fontSize: 12 }} />
-              <button className="zbtn zbtn-primary flex-shrink-0" style={{ padding: '6px 14px' }}
-                onClick={() => postMessage({ type: 'set-godot-path', payload: { path: godotPath } })}>Kaydet</button>
+          {/* Godot — otonom; kullanıcı yol girmez */}
+          <div className="glass-muted flex items-center gap-2" style={{ padding: '12px 14px' }}>
+            <FolderCog size={15} strokeWidth={1.75} style={{ color: godotDetectedPath ? 'var(--z-success)' : 'var(--z-txt-2)', flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: 13 }}>Godot Motoru</div>
+              <div className="zxs zmuted">
+                {godotDetectedPath
+                  ? `Godot ${godotDetectedVersion?.split('.').slice(0, 2).join('.') ?? ''} hazır — otomatik yönetiliyor`
+                  : 'İlk derlemede otomatik indirilip kurulur. Sen hiç uğraşmazsın.'}
+              </div>
             </div>
-            {godotDetectedPath
-              ? <div className="zsm flex items-center gap-1" style={{ color: 'var(--z-success)', marginTop: 6 }}><CheckCircle2 size={12} strokeWidth={2} /> Godot {godotDetectedVersion?.split('.').slice(0, 2).join('.') ?? ''} otomatik bulundu — hazır</div>
-              : <div className="zxs zmuted" style={{ marginTop: 6 }}>Otomatik aranır. Bulunamazsa Godot 4.3+ yolunu gir (offline üretim yine de çalışır).</div>}
+            {godotDetectedPath && <CheckCircle2 size={16} strokeWidth={2} style={{ color: 'var(--z-success)', flexShrink: 0 }} />}
           </div>
 
           {/* Provider search */}
@@ -95,7 +91,7 @@ export function ProvidersSheet({ open, onClose }: { open: boolean; onClose: () =
                   <div className="flex items-center justify-between" style={{ marginBottom: 9 }}>
                     <div className="flex items-center gap-2">
                       <span style={{ fontWeight: 500, fontSize: 13 }}>{provider.name}</span>
-                      {provider.hasFreeModels && <span className="zbadge zbadge-free">FREE</span>}
+                      {freeMode && provider.hasFreeModels && <span className="zbadge zbadge-free">FREE</span>}
                     </div>
                     <div className="flex items-center gap-2">
                       {status === 'connected' && <span className="zxs flex items-center gap-1" style={{ color: 'var(--z-success)' }}><CheckCircle2 size={12} strokeWidth={2} /> Bağlı</span>}
@@ -119,7 +115,7 @@ export function ProvidersSheet({ open, onClose }: { open: boolean; onClose: () =
                   </div>
                   <div className="zxs zmuted" style={{ marginTop: 5 }}>
                     {provider.models.length} model
-                    {provider.hasFreeModels ? ` · ${provider.models.filter((m) => m.tier === 'free').length} ücretsiz` : ''}
+                    {freeMode && provider.hasFreeModels ? ` · ${provider.models.filter((m) => m.tier === 'free').length} ücretsiz` : ''}
                   </div>
                 </div>
               );

@@ -24,6 +24,8 @@ const RULES: Array<{ re: RegExp; type: string; extra: string[] }> = [
     extra: ['Gün/zaman döngüsü', 'Ekim–hasat ve envanter', 'Ekonomi ve etkileşimli nesneler'] },
   { re: /yarış|racing|araba|drift|kart/i, type: 'Yarış',
     extra: ['Araç fiziği ve sürüş kontrolü', 'Pist ve tur/checkpoint mantığı', 'Sıralama ve zamanlayıcı'] },
+  { re: /macera|adventure|keşif|kesif|explore|hikaye|story|bulmaca|puzzle/i, type: 'Macera',
+    extra: ['Serbest keşif ve top-down hareket', 'Nesne/NPC etkileşimi ve diyalog', 'Envanter ve anahtar-kapı bulmacaları'] },
 ];
 
 export function buildPlan(prompt: string): BuildPlan {

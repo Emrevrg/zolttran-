@@ -4,6 +4,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
 
 import type {
   WebviewToExtension,
@@ -24,6 +25,7 @@ import { generateGameOffline, detectGameType } from './agent/offline-generator.j
 import { taskScheduler }     from './agent/task-scheduler.js';
 import { godotBridge }       from './godot/godot-bridge.js';
 import { locateGodot }       from './godot/godot-locator.js';
+import { provision, platformAsset, GODOT_LABEL } from './godot/godot-provisioner.js';
 import { projectScaffolder } from './godot/project-scaffolder.js';
 import { deployManager }     from './build/deploy-manager.js';
 import { liveServer }        from './preview/live-server.js';
@@ -38,6 +40,7 @@ import { security }          from './utils/security.js';
 let view: vscode.WebviewView | undefined;
 let outputChannel: vscode.OutputChannel;
 let eventsWired = false;
+let ctx: vscode.ExtensionContext;
 // Cached vscode API reference — acquireVsCodeApi() may only be called ONCE
 // This is handled in the webview (store.ts), not here. In extension.ts we
 // communicate via panel.webview.postMessage directly.
@@ -47,6 +50,7 @@ let eventsWired = false;
 // ---------------------------------------------------------------------------
 
 export function activate(context: vscode.ExtensionContext): void {
+  ctx = context;
   outputChannel = vscode.window.createOutputChannel('Zolttran');
   context.subscriptions.push(outputChannel);
 
@@ -243,8 +247,8 @@ async function handleMsg(msg: WebviewToExtension, context: vscode.ExtensionConte
     case 'new-game': {
       const { prompt } = msg.payload;
       if (!await security.requestApproval(context, 'file-write', `Godot projesi oluştur: ${prompt}`)) break;
-      const workspacePath = getWorkspacePath();
-      if (!workspacePath) { post({ type: 'error', payload: { message: 'Workspace klasörü açık değil.' } }); break; }
+      // Workspace açık değilse otomatik bir üretim klasörü kullan (kullanıcı uğraşmasın)
+      const workspacePath = getOutputBase();
 
       void (async () => {
         const step = (agentType: string, title: string, progress: number, status: 'executing' | 'completed') =>
@@ -285,8 +289,9 @@ async function handleMsg(msg: WebviewToExtension, context: vscode.ExtensionConte
 
     case 'build-platform': {
       const { platform } = msg.payload;
+      if (!await ensureGodotAvailable(context)) { post({ type: 'notification', payload: { level: 'warn', message: 'Godot gerekli — derleme için otomatik kurulumu onayla.' } }); break; }
       if (!await security.requestApproval(context, 'build', `${platform} build`)) break;
-      post({ type: 'toast', payload: { message: `🔨 ${platform} build başladı...`, type: 'info', duration: 3000 } });
+      post({ type: 'toast', payload: { message: `${platform} build başladı...`, type: 'info', duration: 3000 } });
       void deployManager.buildPlatform(platform as Platform);
       break;
     }
@@ -370,7 +375,10 @@ function buildSnapshot(): Partial<AppState> {
 
 async function handleRunPreview(): Promise<void> {
   const projectPath = deployManager.projectPath || getWorkspacePath() || '';
-  if (!projectPath) { post({ type: 'error', payload: { message: 'Godot projesi yapılandırılmamış.' } }); return; }
+  if (!projectPath) { post({ type: 'error', payload: { message: 'Önce bir oyun üret — sonra çalıştır.' } }); return; }
+
+  const godot = await ensureGodotAvailable(ctx);
+  if (!godot) { post({ type: 'notification', payload: { level: 'warn', message: 'Godot gerekli — önizleme için otomatik kurulumu onayla.' } }); return; }
 
   const buildDir = path.join(projectPath, 'build', 'web');
   if (!fs.existsSync(path.join(buildDir, 'index.html'))) {
@@ -390,6 +398,7 @@ async function handleRunPreview(): Promise<void> {
 }
 
 async function handleBuildAll(): Promise<void> {
+  if (!await ensureGodotAvailable(ctx)) { post({ type: 'notification', payload: { level: 'warn', message: 'Godot gerekli — derleme için otomatik kurulumu onayla.' } }); return; }
   post({ type: 'state-update', payload: { isBuildingAll: true } });
   await deployManager.buildAll(['web', 'windows', 'linux']);
   post({ type: 'state-update', payload: { isBuildingAll: false } });
@@ -422,6 +431,54 @@ async function autoDetectGodot(context: vscode.ExtensionContext): Promise<void> 
     post({ type: 'godot-detected', payload: { path: det.path, version: det.version } });
   } catch (err) {
     logger.warn(`Godot otomatik tespiti başarısız: ${String(err)}`);
+  }
+}
+
+let godotProvisioning = false;
+
+/**
+ * Godot'un kullanılabilir olmasını garanti eder: bulunmuşsa onu kullanır,
+ * yoksa resmi sürümü otomatik indirir (kullanıcı Godot kurulumuyla uğraşmaz).
+ * Döndürdüğü yol godotBridge'e ayarlanmıştır; null = kullanılamıyor.
+ */
+async function ensureGodotAvailable(context: vscode.ExtensionContext): Promise<string | null> {
+  const det = locateGodot();
+  if (det) { godotBridge.setGodotPath(det.path); return det.path; }
+
+  const stored = context.globalState.get<string>('zolttran.godotProvisioned');
+  if (stored && fs.existsSync(stored)) { godotBridge.setGodotPath(stored); return stored; }
+
+  if (godotProvisioning) { vscode.window.showInformationMessage('Godot zaten indiriliyor…'); return null; }
+  if (!platformAsset()) {
+    vscode.window.showWarningMessage('Bu platformda Godot otomatik indirilemiyor. Lütfen Godot 4.3+ kurun.');
+    return null;
+  }
+
+  const choice = await vscode.window.showInformationMessage(
+    `Zolttran oyunları derlemek için Godot ${GODOT_LABEL} kullanır. Tek seferlik otomatik indirilsin mi? (~110 MB)`,
+    'İndir ve Kur', 'Vazgeç');
+  if (choice !== 'İndir ve Kur') return null;
+
+  godotProvisioning = true;
+  try {
+    const dir = path.join(context.globalStorageUri.fsPath, 'godot');
+    const exe = await vscode.window.withProgress(
+      { location: vscode.ProgressLocation.Notification, title: `Godot ${GODOT_LABEL} indiriliyor…`, cancellable: false },
+      async (progress) => {
+        let last = 0;
+        return await provision(dir, (pct) => { progress.report({ increment: pct - last, message: `%${pct}` }); last = pct; });
+      });
+    godotBridge.setGodotPath(exe);
+    await context.globalState.update('zolttran.godotProvisioned', exe);
+    await vscode.workspace.getConfiguration('zolttran').update('godotPath', exe, vscode.ConfigurationTarget.Global);
+    post({ type: 'godot-detected', payload: { path: exe, version: GODOT_LABEL } });
+    vscode.window.showInformationMessage('Godot hazır — artık oyunları derleyip oynayabilirsin.');
+    return exe;
+  } catch (err) {
+    vscode.window.showErrorMessage(`Godot indirme başarısız: ${String(err)}. İnterneti kontrol edip tekrar dene.`);
+    return null;
+  } finally {
+    godotProvisioning = false;
   }
 }
 
@@ -491,6 +548,15 @@ function applyConfig(context: vscode.ExtensionContext): void {
 
 function getWorkspacePath(): string | undefined {
   return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+}
+
+/** Üretim taban klasörü: açık workspace ya da ~/ZolttranGames (otomatik). */
+function getOutputBase(): string {
+  const ws = getWorkspacePath();
+  if (ws) return ws;
+  const dir = path.join(os.homedir(), 'ZolttranGames');
+  try { fs.mkdirSync(dir, { recursive: true }); } catch { /* yoksay */ }
+  return dir;
 }
 
 // ---------------------------------------------------------------------------

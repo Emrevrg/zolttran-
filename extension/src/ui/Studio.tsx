@@ -8,7 +8,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
-  Gamepad2, ArrowUp, Skull, Footprints, Swords, Dices, Sprout, Crosshair,
+  Gamepad2, ArrowUp, Skull, Footprints, Swords, Dices, Sprout, Crosshair, Compass,
   Copy, Check, Paperclip, MessageSquare, MonitorPlay, ListTree, ClipboardCheck, X, type LucideIcon,
 } from 'lucide-react';
 import { useStore } from './store.js';
@@ -29,6 +29,7 @@ const STARTERS: Array<{ icon: LucideIcon; title: string; text: string }> = [
   { icon: Dices,     title: 'Roguelike',        text: 'Prosedürel zindanlar ve kalıcı ölüm içeren bir roguelike geliştir' },
   { icon: Sprout,    title: 'Cozy Çiftlik',      text: 'Ekim, hasat ve gün döngüsü olan cozy bir çiftlik simülasyonu yap' },
   { icon: Crosshair, title: '3D FPS',            text: '3D birinci şahıs nişancı — dalga bazlı düşmanlarla arena modu' },
+  { icon: Compass,   title: 'Macera',            text: 'Keşif, nesne etkileşimi ve bulmacalarla top-down bir macera oyunu yap' },
 ];
 
 export type Tab = 'chat' | 'stage' | 'inspect';

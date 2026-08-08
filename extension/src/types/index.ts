@@ -333,6 +333,7 @@ export type GameType =
   | 'roguelike'
   | 'farm-sim'
   | 'strategy'
+  | 'adventure'
   | 'custom';
 
 export interface GameDesignDocument {
