@@ -23,6 +23,10 @@ Godot 4.x ile entegre. Sen sadece konuş — tasarım, kod, sanat, test, derleme
 |---|---|
 | ![Ana ekran](docs/screenshots/zolttran-ui-home.png) | ![Canlı süreç](docs/screenshots/zolttran-ui-live.png) |
 
+Metne duyarlı, profesyonel composer:
+
+![Composer](docs/screenshots/zolttran-ui-typing.png)
+
 | Dosya / görsel / 3D ekleme | 3D model görüntüleyici |
 |---|---|
 | ![Ekleme](docs/screenshots/zolttran-attachments.png) | ![3D](docs/screenshots/zolttran-3d-viewer.png) |
