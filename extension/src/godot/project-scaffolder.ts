@@ -53,8 +53,18 @@ export class GodotProjectScaffolder {
     // export_presets.cfg
     this.write(projectPath, 'export_presets.cfg', this.buildExportPresets(gdd.targetPlatforms), filesCreated);
 
-    // Main scene
-    const mainScene = sceneBuilder.buildMainScene('Main');
+    // Main scene — kendine yeten oynanabilir sahne (oyuncu + dünya scripti)
+    const worldMap: Record<string, { script: string; node: string }> = {
+      'bullet-heaven': { script: 'res://scripts/enemy_spawner.gd', node: 'EnemySpawner' },
+      'roguelike':     { script: 'res://scripts/dungeon_generator.gd', node: 'DungeonGenerator' },
+      'strategy':      { script: 'res://scripts/map_generator.gd', node: 'MapGenerator' },
+    };
+    const world = worldMap[gdd.gameType];
+    const mainScene = sceneBuilder.buildPlayableMainScene({
+      physics: gdd.techRequirements.physics === '3d' ? '3d' : '2d',
+      worldScript: world?.script,
+      worldNodeName: world?.node,
+    });
     this.write(projectPath, 'scenes/main.tscn', mainScene, filesCreated);
 
     // Player scene
@@ -180,6 +190,10 @@ move_right={
 jump={
 "deadzone": 0.5,
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":32,"physical_keycode":0,"key_label":0,"unicode":32,"location":0,"echo":false,"script":null)]
+}
+shoot={
+"deadzone": 0.5,
+"events": [Object(InputEventMouseButton,"resource_local_to_scene":false,"device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"button_index":1,"factor":1.0,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"tilt":Vector2(0, 0),"pen_inverted":false,"script":null)]
 }`;
     }
 
@@ -212,6 +226,14 @@ attack={
 pause={
 "deadzone": 0.5,
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":4194305,"physical_keycode":0,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)]
+}
+run={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":4194325,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)]
+}
+interact={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":69,"key_label":0,"unicode":101,"location":0,"echo":false,"script":null)]
 }`;
   }
 

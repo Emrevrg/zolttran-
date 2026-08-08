@@ -124,7 +124,7 @@ export class GodotScriptGenerator {
         },
         {
           name: 'start_game', returnType: 'void',
-          body: 'is_paused = false\nget_tree().change_scene_to(initial_scene)\ngame_started.emit()',
+          body: 'is_paused = false\nif initial_scene:\n\tget_tree().change_scene_to_packed(initial_scene)\ngame_started.emit()',
         },
         {
           name: 'pause_game', returnType: 'void',
