@@ -526,6 +526,7 @@ export type WebviewToExtension =
   | { type: 'build-all' }
   | { type: 'deploy'; payload: { platform: Platform; hosting: HostingService } }
   | { type: 'open-file'; payload: { path: string } }
+  | { type: 'open-external'; payload: { url: string } }
   | { type: 'cancel-agent'; payload: { taskId: string } }
   | { type: 'set-orchestrator-mode'; payload: { mode: OrchestratorMode } }
   | { type: 'set-godot-path'; payload: { path: string } }

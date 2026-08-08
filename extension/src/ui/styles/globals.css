@@ -573,3 +573,103 @@ body{ font-feature-settings:"cv02","cv03","cv04","ss01"; -webkit-font-smoothing:
 .leading-relaxed{ line-height:1.6; }
 .opacity-0{ opacity:0; }
 .group:hover .group-hover\:opacity-100{ opacity:1; }
+
+/* =========================================================
+   ZOLTTRAN v7 — Tesana benzeri 3-bölge Studio çalışma alanı
+   ========================================================= */
+.zws{ flex:1; display:flex; flex-direction:column; min-height:0; min-width:0; }
+
+/* Sekmeler — dar modda görünür, genişçe modda gizli */
+.zws-tabs{ display:flex; gap:4px; padding:8px 10px; border-bottom:1px solid var(--z-border); flex-shrink:0; }
+.zws-tab{ flex:1; display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  font-size:12px; font-weight:600; color:var(--z-txt-2); background:transparent;
+  border:1px solid transparent; border-radius:9px; padding:7px 8px; cursor:pointer; position:relative;
+  transition:background .15s,color .15s,border-color .15s; }
+.zws-tab:hover{ color:var(--z-txt); background:rgba(255,255,255,0.04); }
+.zws-tab.active{ color:#fff; background:var(--z-primary-dim); border-color:var(--z-primary-bdr); }
+.zws-tab-dot{ width:6px; height:6px; border-radius:50%; background:var(--z-warning); }
+.zws-tab-dot.live{ background:var(--z-success); box-shadow:0 0 7px var(--z-success); }
+
+.zws-cols{ flex:1; min-height:0; min-width:0; display:block; }
+.zws-col{ display:none; min-width:0; min-height:0; height:100%; flex-direction:column; }
+.zws-col[data-active]{ display:flex; }
+
+/* Sohbet sütunu */
+.zchatcol{ flex:1; display:flex; flex-direction:column; min-height:0; }
+.zchatcol .zcomposer-dock{ max-width:100%; }
+
+/* ---- Orta sahne: canlı önizleme ---- */
+.zstage{ flex:1; display:flex; flex-direction:column; min-height:0; min-width:0; background:var(--z-bg-1); }
+.zstage-bar{ display:flex; align-items:center; gap:8px; padding:9px 12px; border-bottom:1px solid var(--z-border); flex-shrink:0; }
+.zstage-title{ display:inline-flex; align-items:center; gap:7px; font-size:12.5px; font-weight:650; color:var(--z-txt); min-width:0; }
+.zstage-metric{ font-family:var(--z-mono,ui-monospace,monospace); font-size:11px; color:var(--z-txt-2);
+  border:1px solid var(--z-border); border-radius:6px; padding:2px 7px; }
+.zicon-danger:hover{ color:var(--z-danger) !important; }
+.zstage-body{ flex:1; min-height:0; position:relative; display:flex; }
+.zstage-frame{ flex:1; width:100%; height:100%; border:0; background:#000; }
+.zstage-empty{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:32px 24px; gap:2px; }
+.zstage-orb{ width:76px; height:76px; border-radius:50%; display:grid; place-items:center; margin-bottom:16px;
+  color:#fff; background:radial-gradient(circle at 30% 25%,rgba(124,106,247,.5),rgba(34,211,238,.12) 60%,transparent 72%);
+  border:1px solid var(--z-primary-bdr); box-shadow:0 0 40px -8px rgba(124,106,247,.6); }
+.zstage-orb.dim{ color:var(--z-txt-2); background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.08),transparent 70%);
+  border-color:var(--z-border); box-shadow:none; }
+.zstage-orb.building{ color:var(--z-secondary); }
+.zstage-h{ font-size:17px; font-weight:750; color:var(--z-txt); }
+.zstage-p{ font-size:13px; color:var(--z-txt-2); max-width:340px; margin-top:6px; line-height:1.55; }
+.zstage-steps{ margin-top:16px; display:flex; flex-direction:column; gap:7px; text-align:left; }
+.zstage-step{ display:flex; align-items:center; gap:8px; font-size:12px; color:var(--z-txt-2); }
+
+/* ---- Sağ inspector ---- */
+.zinspect{ flex:1; min-height:0; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:14px; }
+.zinspect-proj{ padding:10px 12px; border:1px solid var(--z-border); border-radius:11px; background:var(--z-bg-2); }
+.zinspect-sec{ display:flex; flex-direction:column; gap:8px; }
+.zinspect-h{ display:flex; align-items:center; gap:8px; font-size:10.5px; font-weight:700; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--z-txt-3,rgba(255,255,255,.45)); }
+
+/* asset ağacı */
+.ztree{ display:flex; flex-direction:column; }
+.ztree-head{ display:flex; align-items:center; gap:6px; width:100%; background:transparent; border:none; cursor:pointer;
+  padding:5px 4px; font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--z-txt-2); }
+.ztree-head:hover{ color:var(--z-txt); }
+.ztree-caret{ transition:transform .15s; flex-shrink:0; opacity:.7; }
+.ztree-count{ margin-left:auto; font-size:10px; color:var(--z-txt-3,rgba(255,255,255,.4)); font-weight:600; }
+.ztree-body{ display:flex; flex-direction:column; padding-left:6px; }
+.ztree-empty{ font-size:11px; color:var(--z-txt-3,rgba(255,255,255,.35)); padding:2px 0 2px 20px; }
+.ztree-leaf{ display:flex; align-items:center; gap:8px; width:100%; background:transparent; border:none; cursor:pointer;
+  padding:5px 8px; border-radius:7px; font-size:12px; color:var(--z-txt-2); }
+.ztree-leaf:hover{ background:rgba(255,255,255,0.05); color:var(--z-txt); }
+
+/* ---- Plan kartı ---- */
+.zplan{ flex:1; max-width:82%; background:linear-gradient(180deg,var(--z-primary-dim),rgba(124,106,247,.04));
+  border:1px solid var(--z-primary-bdr); border-radius:14px; padding:14px 15px; }
+.zplan-head{ display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:700; color:var(--z-txt); margin-bottom:8px; }
+.zplan-sum{ font-size:12.5px; color:var(--z-txt-2); line-height:1.55; margin-bottom:10px; }
+.zplan-steps{ margin:0 0 14px; padding-left:18px; display:flex; flex-direction:column; gap:6px; }
+.zplan-steps li{ font-size:12.5px; color:var(--z-txt); line-height:1.5; }
+.zplan-steps li::marker{ color:var(--z-secondary); font-variant-numeric:tabular-nums; }
+.zplan-actions{ display:flex; gap:8px; }
+
+.zchat-hint{ font-size:12.5px; color:var(--z-txt-2); text-align:center; padding:18px 10px; opacity:.8; }
+
+/* ---- Genişçe mod: 3 sütun yan yana, sekmeler gizli ---- */
+@media (min-width:900px){
+  .zws-tabs{ display:none; }
+  .zws-cols{ display:flex; }
+  .zws-col{ display:flex !important; height:auto; }
+  .zws-chat{ flex:1.05; min-width:300px; border-right:1px solid var(--z-border); }
+  .zws-stage{ flex:1.7; min-width:340px; }
+  .zws-inspect{ flex:0 0 262px; min-width:238px; max-width:300px; border-left:1px solid var(--z-border); }
+}
+
+/* v7 — dar modda yatay taşma koruması */
+.zmain{ overflow:hidden; }
+.zstudio{ overflow:hidden; }
+.zws{ overflow:hidden; }
+.zws-cols{ overflow:hidden; }
+.zws-col{ overflow:hidden; }
+.zws-tabs{ min-width:0; }
+.zws-tab{ min-width:0; overflow:hidden; padding:7px 6px; }
+.zws-tab > *{ flex-shrink:0; }
+.zstage-bar{ min-width:0; }
+.zstage-title{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1 1 auto; min-width:0; }
+.zstage-bar > .ml-auto{ flex-shrink:0; }

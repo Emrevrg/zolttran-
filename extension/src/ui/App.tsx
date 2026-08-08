@@ -1,13 +1,12 @@
 /**
- * Zolttran Root — tesana tarzı: dar sol ikon nav + tek konuşma yüzeyi +
- * istenince açılan sağ süreç çekmecesi. Mod/sekme yok, emoji yok.
+ * Zolttran Root — dar sol ikon nav + Tesana benzeri 3-bölge Studio.
+ * Sağ süreç artık Studio'nun içinde (Varlıklar sütunu/sekmesi); ayrı çekmece yok.
  */
 import React, { useEffect, useCallback, useState } from 'react';
 import { X } from 'lucide-react';
 import { useStore } from './store.js';
-import { Studio } from './Studio.js';
+import { Studio, type Tab } from './Studio.js';
 import { LeftNav } from './components/LeftNav.js';
-import { LiveRail } from './panels/LiveRail.js';
 import { ProvidersSheet } from './components/ProvidersSheet.js';
 import type { ExtensionToWebview } from '../types/index.js';
 
@@ -20,8 +19,8 @@ export default function App() {
     addToast, postMessage, setOrchestratorMode,
   } = useStore();
 
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [tab, setTab] = useState<Tab>('chat');
 
   const handleMessage = useCallback((event: MessageEvent<ExtensionToWebview>) => {
     const msg = event.data;
@@ -32,7 +31,7 @@ export default function App() {
         if (msg.payload.done) finalizeStream(useStore.getState().currentStreamContent);
         else { updateStreamChunk(msg.payload.chunk); setStreaming(true); }
         break;
-      case 'agent-update':    upsertTask(msg.payload.task); setDrawerOpen(true); break;
+      case 'agent-update':    upsertTask(msg.payload.task); break;
       case 'build-update':    setBuildResult(msg.payload.result); if (msg.payload.result.status !== 'building') setIsBuildingAll(false); break;
       case 'preview-update':  setPreview(msg.payload.state); break;
       case 'godot-status':    setGodotConnected(msg.payload.connected, msg.payload.method); break;
@@ -51,32 +50,20 @@ export default function App() {
     return () => window.removeEventListener('message', handleMessage as EventListener);
   }, [handleMessage, postMessage, setOrchestratorMode]);
 
-  const onNew = () => { clearMessages(); setDrawerOpen(false); };
+  const onNew = () => { clearMessages(); setTab('chat'); };
 
   return (
     <div className="zapp">
       <LeftNav
-        drawerOpen={drawerOpen}
-        onToggleDrawer={() => setDrawerOpen((v) => !v)}
+        tab={tab}
+        onTab={setTab}
         onNew={onNew}
         onSettings={() => setSheetOpen(true)}
       />
 
       <main className="zmain">
-        <Studio onOpenDrawer={() => setDrawerOpen(true)} onOpenProviders={() => setSheetOpen(true)} />
+        <Studio onOpenProviders={() => setSheetOpen(true)} tab={tab} setTab={setTab} />
       </main>
-
-      {/* Right process drawer — istenince açılır, kalıcı değil */}
-      <div className={`zdrawer ${drawerOpen ? 'open' : ''}`} role="complementary" aria-hidden={!drawerOpen}>
-        <div className="zdrawer-scrim" onClick={() => setDrawerOpen(false)} />
-        <div className="zdrawer-panel">
-          <div className="zdrawer-head">
-            <span className="zdrawer-title">Canlı Süreç</span>
-            <button className="zicon-btn" onClick={() => setDrawerOpen(false)} title="Kapat"><X size={16} strokeWidth={1.75} /></button>
-          </div>
-          <LiveRail onOpenProviders={() => setSheetOpen(true)} />
-        </div>
-      </div>
 
       <ProvidersSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
 

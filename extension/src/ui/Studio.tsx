@@ -1,19 +1,24 @@
 /**
- * Studio — tek konuşma yüzeyi. Sol ikon nav + bu yüzey + istenince sağ çekmece.
- * Emoji yok; ince Lucide ikonlar. Kullanıcı konuşur, AI oyunu kurar.
+ * Studio — Tesana benzeri çalışma alanı.
+ * Boşken: "Ne inşa edelim?" hero + composer.
+ * Aktifken: 3 bölge — sol SOHBET · orta CANLI ÖNİZLEME · sağ ASSET AĞACI.
+ * Dar sidebar'da sekmeli tek sütun; genişleyince sütunlar açılır.
  */
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
-  Gamepad2, ArrowUp, PanelRight, Skull, Footprints, Swords, Dices, Sprout, Crosshair,
-  Copy, Check, Paperclip, type LucideIcon,
+  Gamepad2, ArrowUp, Skull, Footprints, Swords, Dices, Sprout, Crosshair,
+  Copy, Check, Paperclip, MessageSquare, MonitorPlay, ListTree, ClipboardCheck, X, type LucideIcon,
 } from 'lucide-react';
 import { useStore } from './store.js';
 import { ModelSelector } from './components/ModelSelector.js';
 import { AttachmentStrip, classifyFile } from './components/attachments.js';
 import { ImageLightbox } from './components/ImageLightbox.js';
 import { ModelViewer } from './components/ModelViewer.js';
+import { StagePane } from './workspace/StagePane.js';
+import { Inspector } from './workspace/Inspector.js';
+import { buildPlan, type BuildPlan } from './workspace/plan.js';
 import { ZOLTTRAN_MARK } from './assets/logo.js';
 import type { ChatMessage, Attachment } from '../types/index.js';
 
@@ -26,47 +31,74 @@ const STARTERS: Array<{ icon: LucideIcon; title: string; text: string }> = [
   { icon: Crosshair, title: '3D FPS',            text: '3D birinci şahıs nişancı — dalga bazlı düşmanlarla arena modu' },
 ];
 
-export function Studio({ onOpenDrawer, onOpenProviders }: { onOpenDrawer: () => void; onOpenProviders: () => void }) {
-  const { messages, isStreaming, currentStreamContent, ready, freeMode, costToday, godotConnected, postMessage, addMessage, setStreaming } = useStore();
+export type Tab = 'chat' | 'stage' | 'inspect';
+
+export function Studio({ onOpenProviders, tab, setTab }: { onOpenProviders: () => void; tab: Tab; setTab: (t: Tab) => void }) {
+  const {
+    messages, isStreaming, currentStreamContent, ready, freeMode, costToday, godotConnected,
+    currentProject, currentGdd, activeTasks, preview,
+    postMessage, addMessage, setStreaming,
+  } = useStore();
   const [input, setInput] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [viewer, setViewer] = useState<Attachment | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [plan, setPlan] = useState<{ plan: BuildPlan; prompt: string } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const active = messages.length > 0 || isStreaming || !!currentProject || !!currentGdd || activeTasks.length > 0 || plan != null;
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length, isStreaming, currentStreamContent.length]);
+  }, [messages.length, isStreaming, currentStreamContent.length, plan]);
+
+  // Oyun çalışınca / kurulmaya başlayınca sahneyi öne getir (dar modda)
+  useEffect(() => { if (preview.running) setTab('stage'); }, [preview.running]);
+  useEffect(() => { if (activeTasks.length > 0) setTab('stage'); }, [activeTasks.length]);
 
   const addFiles = useCallback((files: FileList | File[]) => {
     const list = Array.from(files).map(classifyFile);
     if (list.length) setAttachments((prev) => [...prev, ...list]);
   }, []);
-
   const removeAtt = (id: string) => setAttachments((prev) => prev.filter((a) => a.id !== id));
-
   const openAtt = (a: Attachment) => { if (a.kind === 'image' || a.kind === 'model') setViewer(a); };
 
-  const send = useCallback((buildGame = false) => {
+  const pushUser = (content: string) => addMessage({
+    id: crypto.randomUUID(), role: 'user', content, timestamp: Date.now(),
+    attachments: attachments.length ? attachments : undefined,
+  });
+
+  const send = useCallback(() => {
     const content = input.trim();
     if ((!content && attachments.length === 0) || isStreaming) return;
-    // Optimistik kullanıcı mesajı — ekler webview içi objectURL ile önizlenir
-    addMessage({
-      id: crypto.randomUUID(), role: 'user', content, timestamp: Date.now(),
-      attachments: attachments.length ? attachments : undefined,
-    });
+    pushUser(content);
     setStreaming(true);
-    const attNames = attachments.map((a) => a.name);
-    if (buildGame) postMessage({ type: 'new-game', payload: { prompt: content, gameType: 'custom' } });
-    else postMessage({ type: 'chat-message', payload: { content, attachments: attNames } });
-    setInput('');
-    setAttachments([]);
+    postMessage({ type: 'chat-message', payload: { content, attachments: attachments.map((a) => a.name) } });
+    setInput(''); setAttachments([]);
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
   }, [input, attachments, isStreaming, postMessage, addMessage, setStreaming]);
 
-  const onKey = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(false); } };
+  // "Oyunu Kur" → önce planı göster (Tarif → Plan → İnşa)
+  const proposePlan = useCallback(() => {
+    const content = input.trim();
+    if (!content || isStreaming) return;
+    pushUser(content);
+    setPlan({ plan: buildPlan(content), prompt: content });
+    setInput(''); setAttachments([]);
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
+  }, [input, attachments, isStreaming, addMessage]);
+
+  const approvePlan = () => {
+    if (!plan) return;
+    setStreaming(true);
+    postMessage({ type: 'new-game', payload: { prompt: plan.prompt, gameType: 'custom' } });
+    setPlan(null);
+    setTab('stage');
+  };
+
+  const onKey = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
   const resize = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
     e.target.style.height = 'auto';
@@ -74,9 +106,9 @@ export function Studio({ onOpenDrawer, onOpenProviders }: { onOpenDrawer: () => 
   };
   const pick = (text: string) => { setInput(text); textareaRef.current?.focus(); };
 
-  const isEmpty = messages.length === 0 && !isStreaming;
-
   const canSend = (input.trim().length > 0 || attachments.length > 0) && !isStreaming;
+  const canBuild = input.trim().length > 0 && !isStreaming && !plan;
+
   const composer = (big: boolean) => (
     <div className={`zcomposer ${dragOver ? 'dragging' : ''}`} style={big ? { maxWidth: 680, width: '100%', margin: '0 auto' } : undefined}
       onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -105,15 +137,15 @@ export function Studio({ onOpenDrawer, onOpenProviders }: { onOpenDrawer: () => 
         <ModelSelector />
         <span className="zcomposer-hint hidden-sm">
           {input.length > 0
-            ? <><kbd>↵</kbd> gönder · <kbd>⇧↵</kbd> yeni satır · {input.trim().length} karakter</>
+            ? <><kbd>↵</kbd> gönder · {input.trim().length} karakter</>
             : <><kbd>↵</kbd> gönder</>}
         </span>
         <div className="ml-auto flex items-center gap-1.5">
-          <button onClick={() => send(true)} disabled={!canSend}
-            className="zbtn zbtn-ghost zsm" title="Tam oyun pipeline'ı olarak kur">
+          <button onClick={proposePlan} disabled={!canBuild}
+            className="zbtn zbtn-ghost zsm" title="Plan çıkar ve oyunu kur">
             <Gamepad2 size={14} strokeWidth={1.75} /> Oyunu Kur
           </button>
-          <button onClick={() => send(false)} disabled={!canSend}
+          <button onClick={send} disabled={!canSend}
             className={`zsend ${canSend ? 'active' : ''}`} title="Gönder (Enter)">
             <ArrowUp size={17} strokeWidth={2.5} />
           </button>
@@ -122,9 +154,41 @@ export function Studio({ onOpenDrawer, onOpenProviders }: { onOpenDrawer: () => 
     </div>
   );
 
+  const chatColumn = (
+    <div className="zchatcol">
+      <div className="zmsgs">
+        {messages.length === 0 && !isStreaming && !plan && (
+          <div className="zchat-hint">Oyununu tarif et — planı onayla, ajanlar kursun, sonra sağda oyna.</div>
+        )}
+        {messages.map((m) => <Bubble key={m.id} msg={m} onOpen={openAtt} />)}
+        {plan && <PlanCard data={plan.plan} onApprove={approvePlan} onCancel={() => setPlan(null)} />}
+        {isStreaming && currentStreamContent && (
+          <div className="zrow z-slide-up">
+            <Avatar />
+            <div className="zbubble zbubble-ai">
+              <div className="zmd"><ReactMarkdown remarkPlugins={[remarkGfm]}>{currentStreamContent}</ReactMarkdown></div>
+              <span className="stream-cursor" />
+            </div>
+          </div>
+        )}
+        {isStreaming && !currentStreamContent && (
+          <div className="zrow">
+            <Avatar />
+            <div className="zbubble zbubble-ai flex gap-1.5 items-center" style={{ height: 34 }}>
+              <span className="w-1.5 h-1.5 rounded-full z-bounce-1" style={{ background: 'var(--z-primary)' }} />
+              <span className="w-1.5 h-1.5 rounded-full z-bounce-2" style={{ background: 'var(--z-primary)' }} />
+              <span className="w-1.5 h-1.5 rounded-full z-bounce-3" style={{ background: 'var(--z-primary)' }} />
+            </div>
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+      <div className="zcomposer-dock">{composer(false)}</div>
+    </div>
+  );
+
   return (
     <div className="zstudio">
-      {/* slim top bar */}
       <div className="ztopbar">
         <span className="zbrand">
           <span className="zbrand-name zgrad">ZOLTTRAN</span>
@@ -137,15 +201,12 @@ export function Studio({ onOpenDrawer, onOpenProviders }: { onOpenDrawer: () => 
             Godot
             <span className={`zdot ${godotConnected ? 'zdot-connected' : 'zdot-idle'}`} style={{ width: 5, height: 5 }} />
           </span>
-          {freeMode
-            ? <span className="zchip zchip-free">FREE</span>
-            : <span className="zstat">${costToday.toFixed(3)}</span>}
-          <button className="zicon-btn" onClick={onOpenDrawer} title="Canlı süreç"><PanelRight size={16} strokeWidth={1.75} /></button>
+          {freeMode ? <span className="zchip zchip-free">FREE</span> : <span className="zstat">${costToday.toFixed(3)}</span>}
         </div>
       </div>
 
-      <div className="zconvo">
-        {isEmpty ? (
+      {!active ? (
+        <div className="zconvo">
           <div className="zhero">
             <img src={ZOLTTRAN_MARK} alt="Zolttran" className="zhero-logo" draggable={false} />
             <h1 className="zhero-title">Ne inşa edelim?</h1>
@@ -169,35 +230,21 @@ export function Studio({ onOpenDrawer, onOpenProviders }: { onOpenDrawer: () => 
               <button className="zlink" onClick={onOpenProviders}>Provider bağla</button> ya da FREE MODE ile anahtarsız başla.
             </p>
           </div>
-        ) : (
-          <>
-            <div className="zmsgs">
-              {messages.map((m) => <Bubble key={m.id} msg={m} onOpen={openAtt} />)}
-              {isStreaming && currentStreamContent && (
-                <div className="zrow z-slide-up">
-                  <Avatar />
-                  <div className="zbubble zbubble-ai">
-                    <div className="zmd"><ReactMarkdown remarkPlugins={[remarkGfm]}>{currentStreamContent}</ReactMarkdown></div>
-                    <span className="stream-cursor" />
-                  </div>
-                </div>
-              )}
-              {isStreaming && !currentStreamContent && (
-                <div className="zrow">
-                  <Avatar />
-                  <div className="zbubble zbubble-ai flex gap-1.5 items-center" style={{ height: 34 }}>
-                    <span className="w-1.5 h-1.5 rounded-full z-bounce-1" style={{ background: 'var(--z-primary)' }} />
-                    <span className="w-1.5 h-1.5 rounded-full z-bounce-2" style={{ background: 'var(--z-primary)' }} />
-                    <span className="w-1.5 h-1.5 rounded-full z-bounce-3" style={{ background: 'var(--z-primary)' }} />
-                  </div>
-                </div>
-              )}
-              <div ref={bottomRef} />
-            </div>
-            <div className="zcomposer-dock">{composer(false)}</div>
-          </>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="zws">
+          <div className="zws-tabs">
+            <TabBtn cur={tab} id="chat"    icon={MessageSquare} label="Sohbet"   onClick={setTab} />
+            <TabBtn cur={tab} id="stage"   icon={MonitorPlay}   label="Oyun"     onClick={setTab} badge={preview.running ? 'live' : activeTasks.length ? 'run' : undefined} />
+            <TabBtn cur={tab} id="inspect" icon={ListTree}      label="Varlıklar" onClick={setTab} />
+          </div>
+          <div className="zws-cols">
+            <div className="zws-col zws-chat"    data-active={tab === 'chat' || undefined}>{chatColumn}</div>
+            <div className="zws-col zws-stage"   data-active={tab === 'stage' || undefined}><StagePane /></div>
+            <div className="zws-col zws-inspect" data-active={tab === 'inspect' || undefined}><Inspector onOpenProviders={onOpenProviders} /></div>
+          </div>
+        </div>
+      )}
 
       {viewer && viewer.kind === 'image' && (
         <ImageLightbox url={viewer.url} name={viewer.name} onClose={() => setViewer(null)} />
@@ -205,6 +252,43 @@ export function Studio({ onOpenDrawer, onOpenProviders }: { onOpenDrawer: () => 
       {viewer && viewer.kind === 'model' && (
         <ModelViewer url={viewer.url} ext={viewer.ext} name={viewer.name} onClose={() => setViewer(null)} />
       )}
+    </div>
+  );
+}
+
+function TabBtn({ cur, id, icon: Icon, label, onClick, badge }:
+  { cur: string; id: Tab; icon: LucideIcon; label: string; onClick: (t: Tab) => void; badge?: string }) {
+  return (
+    <button className={`zws-tab ${cur === id ? 'active' : ''}`} onClick={() => onClick(id)}>
+      <Icon size={14} strokeWidth={1.9} /> {label}
+      {badge && <span className={`zws-tab-dot ${badge === 'live' ? 'live' : ''}`} />}
+    </button>
+  );
+}
+
+function PlanCard({ data, onApprove, onCancel }: { data: BuildPlan; onApprove: () => void; onCancel: () => void }) {
+  return (
+    <div className="zrow z-slide-up">
+      <Avatar />
+      <div className="zplan">
+        <div className="zplan-head">
+          <ClipboardCheck size={15} strokeWidth={1.9} style={{ color: 'var(--z-secondary)' }} />
+          <span>Yapım Planı</span>
+          <span className="zchip zchip-free" style={{ marginLeft: 'auto' }}>{data.gameType}</span>
+        </div>
+        <div className="zplan-sum">{data.summary}</div>
+        <ol className="zplan-steps">
+          {data.steps.map((s, i) => <li key={i}>{s}</li>)}
+        </ol>
+        <div className="zplan-actions">
+          <button className="zbtn zbtn-primary zsm" onClick={onApprove}>
+            <Check size={14} strokeWidth={2.2} /> Onayla & İnşa Et
+          </button>
+          <button className="zbtn zbtn-ghost zsm" onClick={onCancel}>
+            <X size={13} strokeWidth={2} /> Vazgeç
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

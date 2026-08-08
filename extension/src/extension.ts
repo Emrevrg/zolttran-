@@ -323,6 +323,10 @@ async function handleMsg(msg: WebviewToExtension, context: vscode.ExtensionConte
       break;
     }
 
+    case 'open-external':
+      await vscode.env.openExternal(vscode.Uri.parse(msg.payload.url));
+      break;
+
     case 'cancel-agent':
       taskScheduler.cancel(msg.payload.taskId);
       break;
@@ -476,8 +480,9 @@ function buildHtml(webview: vscode.Webview, extUri: vscode.Uri): string {
     content="default-src 'none';
       script-src 'nonce-${nonce}';
       style-src ${webview.cspSource} 'unsafe-inline';
-      img-src ${webview.cspSource} data: https:;
+      img-src ${webview.cspSource} data: https: http://localhost:*;
       font-src ${webview.cspSource} data:;
+      frame-src http://localhost:* https:;
       connect-src ws://localhost:* http://localhost:* https:;"/>
   <title>Zolttran</title>
   <link rel="stylesheet" href="${styleUri}"/>
