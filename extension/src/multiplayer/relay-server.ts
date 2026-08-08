@@ -8,6 +8,7 @@
  */
 import { WebSocketServer, WebSocket } from 'ws';
 import { CrossPlayManager, type RealtimeTransport, type PlatformId, type CrossPlayAccount } from './cross-play.js';
+import { AuthoritativeServer, type PlayerInput } from './authoritative-server.js';
 
 interface ClientMsg {
   type: 'create' | 'join' | 'ready' | 'relay';
@@ -48,6 +49,8 @@ export function startRelayServer(port = 9977, netProtocol = 1): RelayHandle {
   const peers = new Map<string, Set<WebSocket>>();
   const transport = new WsRealtimeTransport(peers);
   const manager = new CrossPlayManager(netProtocol, transport);
+  const auth = new Map<string, AuthoritativeServer>(); // oturum → otoriteli sunucu
+  const authOf = (sid: string) => { if (!auth.has(sid)) auth.set(sid, new AuthoritativeServer()); return auth.get(sid)!; };
   const wss = new WebSocketServer({ port });
 
   const accountOf = (m: ClientMsg): CrossPlayAccount => ({
@@ -71,6 +74,7 @@ export function startRelayServer(port = 9977, netProtocol = 1): RelayHandle {
           case 'create': {
             const s = manager.createSession(accountOf(m), m.platform);
             joined = s.sessionId; track(s.sessionId, ws);
+            authOf(s.sessionId).addPlayer(accountId);
             ws.send(JSON.stringify({ event: 'session-created', data: s, sessionId: s.sessionId }));
             break;
           }
@@ -78,6 +82,7 @@ export function startRelayServer(port = 9977, netProtocol = 1): RelayHandle {
             if (!m.sessionId) return;
             const s = manager.joinSession(m.sessionId, accountOf(m), m.platform);
             joined = s.sessionId; track(s.sessionId, ws);
+            authOf(s.sessionId).addPlayer(accountId);
             ws.send(JSON.stringify({ event: 'session-joined', data: s, sessionId: s.sessionId }));
             break;
           }
@@ -89,7 +94,19 @@ export function startRelayServer(port = 9977, netProtocol = 1): RelayHandle {
           }
           case 'relay': {
             if (!joined || !m.event) return;
-            // Oturumdaki diğer eşlere ilet (otantik-hafif)
+            // Otoriteli olaylar (move/shoot) sunucuda doğrulanır — anti-cheat
+            if (m.event === 'move' || m.event === 'shoot') {
+              const input = { type: m.event, ...(m.data as object) } as PlayerInput;
+              const res = authOf(joined).applyInput(accountId, input);
+              if (!res.ok) {
+                ws.send(JSON.stringify({ event: 'input-rejected', data: { reason: res.reason }, sessionId: joined }));
+                break; // geçersiz girdi yayınlanmaz
+              }
+              // Otoriteli anlık durumu tüm eşlere yay
+              transport.broadcast(joined, 'state', { players: authOf(joined).snapshot() });
+              break;
+            }
+            // Otoriteli olmayan olaylar (chat, emote…) doğrudan relaylenir
             transport.broadcast(joined, m.event, { from: accountId, ...(m.data as object) });
             transport.dispatch(joined, accountId, m.event, m.data);
             break;

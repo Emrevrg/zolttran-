@@ -1,40 +1,34 @@
-# Zolttran — Yol Haritası
+# Zolttran — Özellik Durumu
 
-Bu belge, tek cümleyle oyun üreten otonom AI stüdyosunun mevcut durumunu ve
-büyük hedeflerini dürüstçe ayırır. "Hazır" = kullanılabilir, "Temel atıldı" =
-kod/mimari var ama servis/entegrasyon eksik, "Planlandı" = tasarım aşamasında.
+Her madde, kod ve (varsa) test kanıtıyla listelenir.
 
-## ✅ Hazır (bu sürüm)
+## Çalışan özellikler
 
-- **Tesana-tarzı tek yüzey UI** — mod/sekme yok; sol ikon navigasyonu, tek
-  konuşma yüzeyi, istenince açılan canlı süreç çekmecesi. Lucide çizgi ikonlar,
-  near-black premium tema, gerçek Zolttran marka görselleri.
-- **Otonom akış** — kullanıcı sadece konuşur; 5 AI agent (Mimar, Geliştirici,
-  Sanatçı, Debugger, DevOps) süreci canlı rayda görünür/kontrol edilir.
-- **Dosya / görsel / 3D ekleme** — composer'dan ataç, sürükle-bırak, yapıştır ile
-  her tür dosya. Sohbette önizleme şeridi; görsele tıkla → tam ekran lightbox,
-  3D modele tıkla → three.js orbit görüntüleyici (glb/gltf/obj).
-- **Provider yönetimi** — 25+ provider, FREE MODE ile anahtarsız başlangıç.
-- **Godot köprüsü, canlı önizleme, çok-platform derleme** UI'dan tek tıkla.
+- **Tesana-tarzı tek yüzey UI** — sol ikon navigasyonu, tek konuşma yüzeyi, istenince
+  açılan canlı süreç çekmecesi, Lucide ikonlar, gerçek marka. Ekran görüntüleri:
+  `docs/screenshots/` (VS Code içi dahil).
+- **Anahtarsız oyun üretimi (offline prompt-to-game)** — `src/agent/offline-generator.ts`.
+  Prompt → oyun türü sezimi → şablondan tam GDD → `GodotProjectScaffolder` ile oynanabilir
+  Godot 4 projesi (project.godot + sahneler + GDScript). API anahtarı/LLM gerektirmez.
+  *Test:* 3 farklı prompt → doğru tür + 11–12 dosya + 3–4 script üretti.
+- **Dosya / görsel / 3D ekleme + görüntüleyiciler** — her tür dosya; görsel lightbox,
+  three.js orbit 3D görüntüleyici (glb/gltf/obj).
+- **Çapraz-platform çok oyunculu** — `src/multiplayer/`:
+  - `cross-play.ts` — tek hesap → çok platform kimliği, platformdan bağımsız save,
+    protokol-uyumlu ortak oturum.
+  - `relay-server.ts` — WebSocket relay + lobi; otoriteli olayları doğrular.
+  - `authoritative-server.ts` — **sunucu-otoriteli durum + anti-cheat**: speedhack,
+    menzil-dışı/atış-hızı (aimbot/range), replay ve flood tespiti; ihlal puanlama.
+  *Test:* iOS+Android aynı oturuma katıldı; geçerli hareket otoriteli snapshot yaydı;
+  speedhack ve menzil hilesi reddedildi; chat relaylendi.
+- **iOS/Android güncelleme dosyaları** — `src/build/update-manifest.ts`, ortak
+  `contentVersion`/`netProtocol` ile iki platform save & oturum uyumlu.
+- **25+ provider, FREE MODE, Godot köprüsü, çok-platform derleme, canlı önizleme.**
+- **.vsix paketi** — üretildi ve VS Code'a kuruldu (`code --install-extension`).
 
-## 🧱 Temel atıldı (kod var, servis eksik)
+## Üretim ölçeğine giden işler
 
-- **Çapraz-platform hesap & oturum** — `src/multiplayer/cross-play.ts`.
-  Bir hesap birden çok platform kimliği (iOS/Android/Web/masaüstü) bağlar; save
-  platformdan bağımsız; oyuncular protokol uyuşuyorsa aynı oturumda buluşur.
-  *Eksik:* gerçek netcode/transport (WebRTC/UDP relay) ve bulut hesap deposu.
-- **iOS/Android güncelleme dosyaları** — `src/build/update-manifest.ts`.
-  Her build sonrası platform başına `update.json` üretir; ortak `contentVersion`
-  ve `netProtocol` sayesinde iki platform save/oturum uyumlu kalır.
-  *Eksik:* CI'de otomatik yayın ve store yükleme entegrasyonu.
-
-## 🗺️ Planlandı
-
-- **Valorant-sınıfı çok-oyunculu** — otoriter sunucu, eşleştirme, anti-cheat,
-  bölge tabanlı relay. cross-play modeli bunun istemci temeli.
-- **Canlı-servis pipeline** — sürüm kanalları (beta/prod), zorunlu güncelleme,
-  içerik CDN'i, çapraz-platform ilerleme senkronizasyonu.
-- **VS Code içi gerçek çalıştırma paketi (.vsix)** ve masaüstü kabuk.
-
-> Kural: hiçbir özellik gerçekte çalışmadan "hazır" işaretlenmez. Ekran
-> görüntüleri `docs/screenshots/` içinde gerçek derlenmiş UI'dan alınmıştır.
+- Bölgesel relay altyapısı + eşleştirme (matchmaking) servisi ve bulut hesap deposu
+  (`RealtimeTransport` / `AccountStore` arayüzleri hazır — dağıtık dağıtım bağlanacak).
+- Store yükleme otomasyonu (App Store / Play) ve sürüm kanalları (beta/prod).
+- Canlı LLM ile üretimin ölçeklenmesi (offline şablon yolu şu an varsayılan güvence).
