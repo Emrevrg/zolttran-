@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Zap, ChevronDown } from 'lucide-react';
 import { useStore } from '../store.js';
 import { getAllProviders } from '../../providers/provider-registry.js';
 import type { ProviderID } from '../../types/index.js';
@@ -12,7 +13,8 @@ export function ModelSelector() {
   const providers = getAllProviders().filter((p) => p.enabled);
   const currentProvider = providers.find((p) => p.id === activeProviderId);
   const currentModel = currentProvider?.models.find((m) => m.id === activeModelId);
-  const displayName = activeModelId === 'auto' ? '⚡ Otomatik' : (currentModel?.name ?? activeModelId);
+  const isAuto = activeModelId === 'auto';
+  const displayName = isAuto ? 'Otomatik' : (currentModel?.name ?? activeModelId);
 
   useEffect(() => {
     const fn = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
@@ -33,7 +35,7 @@ export function ModelSelector() {
   const tierBadge = (tier: string) => {
     if (tier === 'free')  return <span className="zbadge zbadge-free zsm">FREE</span>;
     if (tier === 'local') return <span className="zbadge zbadge-local zsm">LOCAL</span>;
-    return <span className="zbadge zbadge-premium zsm">💎</span>;
+    return <span className="zbadge zbadge-premium zsm">PRO</span>;
   };
 
   return (
@@ -42,8 +44,9 @@ export function ModelSelector() {
         className="zbtn zbtn-ghost zsm"
         style={{ maxWidth: 170, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
         title={`${currentProvider?.name ?? ''} / ${displayName}`}>
+        {isAuto && <Zap size={13} strokeWidth={2} style={{ color: 'var(--z-accent)', flexShrink: 0 }} />}
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</span>
-        <span className="zmuted" style={{ fontSize: 9, marginLeft: 2 }}>▾</span>
+        <ChevronDown size={13} strokeWidth={2} style={{ opacity: 0.5, flexShrink: 0 }} />
       </button>
 
       {open && (
@@ -57,7 +60,7 @@ export function ModelSelector() {
           <div style={{ maxHeight: 260, overflowY: 'auto', padding: '4px 0' }}>
             <button className="w-full text-left px-3 py-1.5 hover:bg-white/5 flex items-center gap-2 zsm"
               onClick={() => { setActiveProvider(activeProviderId, 'auto'); setOpen(false); }}>
-              <span style={{ color: 'var(--z-accent)' }}>⚡</span>
+              <Zap size={13} strokeWidth={2} style={{ color: 'var(--z-accent)' }} />
               <span>Otomatik (Akıllı Yönlendirme)</span>
             </button>
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', margin: '4px 0' }} />

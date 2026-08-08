@@ -3,7 +3,7 @@
  * Tesana felsefesi: kullanıcı SADECE provider bağlar; gerisini AI halleder.
  */
 import React, { useState } from 'react';
-import { X, Zap, FolderCog } from 'lucide-react';
+import { X, Zap, FolderCog, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { useStore } from '../store.js';
 import { getAllProviders } from '../../providers/provider-registry.js';
 import type { ProviderID } from '../../types/index.js';
@@ -49,7 +49,7 @@ export function ProvidersSheet({ open, onClose }: { open: boolean; onClose: () =
               <div style={{ flex: 1 }}>
                 <div className="flex items-center gap-1.5" style={{ fontWeight: 600, fontSize: 14 }}><Zap size={15} strokeWidth={1.75} style={{ color: 'var(--z-success)' }} /> FREE MODE</div>
                 <div className="zsm zmuted" style={{ marginTop: 2 }}>API anahtarı olmadan 20+ ücretsiz model, otomatik rotasyon.</div>
-                {freeMode && <div className="zsm" style={{ color: 'var(--z-success)', marginTop: 6 }}>✓ Aktif — Maliyet $0.00</div>}
+                {freeMode && <div className="zsm flex items-center gap-1" style={{ color: 'var(--z-success)', marginTop: 6 }}><CheckCircle2 size={12} strokeWidth={2} /> Aktif — Maliyet $0.00</div>}
               </div>
               <label className="ztoggle" style={{ flexShrink: 0 }}>
                 <input type="checkbox" checked={freeMode} onChange={(e) => setFreeMode(e.target.checked)} />
@@ -90,11 +90,11 @@ export function ProvidersSheet({ open, onClose }: { open: boolean; onClose: () =
                       {provider.hasFreeModels && <span className="zbadge zbadge-free">FREE</span>}
                     </div>
                     <div className="flex items-center gap-2">
-                      {status === 'connected' && <span className="zxs" style={{ color: 'var(--z-success)' }}>✓ Bağlı</span>}
-                      {status === 'error' && <span className="zxs" style={{ color: 'var(--z-danger)' }}>✗ Hata</span>}
-                      <button className="zxs zmuted hover:text-white transition-colors" disabled={isTesting}
+                      {status === 'connected' && <span className="zxs flex items-center gap-1" style={{ color: 'var(--z-success)' }}><CheckCircle2 size={12} strokeWidth={2} /> Bağlı</span>}
+                      {status === 'error' && <span className="zxs flex items-center gap-1" style={{ color: 'var(--z-danger)' }}><XCircle size={12} strokeWidth={2} /> Hata</span>}
+                      <button className="zbtn-link zxs flex items-center gap-1" disabled={isTesting}
                         onClick={() => test(provider.id as ProviderID)}>
-                        {isTesting ? <span className="z-spin inline-block">⚙</span> : 'Test'}
+                        {isTesting ? <><Loader2 size={12} strokeWidth={2} className="z-spin" /> Test…</> : 'Test'}
                       </button>
                     </div>
                   </div>

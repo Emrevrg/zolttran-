@@ -542,3 +542,34 @@ body{ font-feature-settings:"cv02","cv03","cv04","ss01"; -webkit-font-smoothing:
 .zbubble .zmd pre{ margin:8px 0; border-radius:8px; }
 .zbubble .zmd ol,.zbubble .zmd ul{ margin:6px 0 8px; }
 .zmsgs{ scroll-behavior:smooth; }
+
+/* =========================================================
+   ZOLTTRAN v6 — Utility fallback (Tailwind v4 utilities üretilmiyor)
+   Kullanılan tüm sınıflar burada deterministik olarak tanımlı.
+   ========================================================= */
+.justify-between{ justify-content:space-between; }
+.flex-shrink-0{ flex-shrink:0; }
+.min-w-0{ min-width:0; }
+.text-center{ text-align:center; }
+.text-left{ text-align:left; }
+.font-mono{ font-family:var(--vscode-editor-font-family,'Cascadia Code',Consolas,monospace); }
+.gap-1{ gap:4px; }
+.gap-3{ gap:12px; }
+.ml-1{ margin-left:4px; }
+.mt-1{ margin-top:4px; }
+.px-3{ padding-left:12px; padding-right:12px; }
+.py-1\.5{ padding-top:6px; padding-bottom:6px; }
+.py-2\.5{ padding-top:10px; padding-bottom:10px; }
+.py-4{ padding-top:16px; padding-bottom:16px; }
+.pb-2\.5{ padding-bottom:10px; }
+.flex-wrap{ flex-wrap:wrap; }
+.hidden{ display:none; }
+.hover\:bg-white\/5:hover{ background:rgba(255,255,255,0.05); }
+.hover\:text-white:hover{ color:#fff; }
+.transition-colors{ transition:color .15s, background .15s; }
+.transition-opacity{ transition:opacity .15s; }
+.transition-all{ transition:all .15s; }
+.truncate{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.leading-relaxed{ line-height:1.6; }
+.opacity-0{ opacity:0; }
+.group:hover .group-hover\:opacity-100{ opacity:1; }

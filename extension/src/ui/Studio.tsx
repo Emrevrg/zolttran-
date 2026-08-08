@@ -132,7 +132,11 @@ export function Studio({ onOpenDrawer, onOpenProviders }: { onOpenDrawer: () => 
         </span>
         <div className="ml-auto flex items-center gap-2">
           <span className="zstat"><span className={`zdot ${ready ? 'zdot-connected' : 'zdot-warning'}`} />{ready ? 'Hazır' : 'Bağlanıyor'}</span>
-          <span className="zstat"><Gamepad2 size={13} strokeWidth={1.75} style={{ opacity: godotConnected ? 1 : 0.4 }} />{godotConnected ? 'Godot' : 'Godot ✕'}</span>
+          <span className="zstat" style={{ opacity: godotConnected ? 1 : 0.55 }}>
+            <Gamepad2 size={13} strokeWidth={1.75} style={{ color: godotConnected ? 'var(--z-success)' : 'inherit' }} />
+            Godot
+            <span className={`zdot ${godotConnected ? 'zdot-connected' : 'zdot-idle'}`} style={{ width: 5, height: 5 }} />
+          </span>
           {freeMode
             ? <span className="zchip zchip-free">FREE</span>
             : <span className="zstat">${costToday.toFixed(3)}</span>}
