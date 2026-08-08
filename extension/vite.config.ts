@@ -13,7 +13,11 @@ export default defineConfig({
       output: {
         entryFileNames: 'main.js',
         chunkFileNames: '[name].js',
-        assetFileNames: '[name].[ext]',
+        assetFileNames: (info) => {
+          const name = info.name ?? '';
+          if (name.endsWith('.css')) return 'main.css';
+          return '[name].[ext]';
+        },
       },
     },
     sourcemap: true,

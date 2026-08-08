@@ -218,6 +218,11 @@
           "type": "boolean",
           "default": false,
           "description": "Anonim kullanım istatistikleri gönder"
+        },
+        "zolttran.autoOpenPanel": {
+          "type": "boolean",
+          "default": false,
+          "description": "VS Code açıldığında Zolttran panelini otomatik aç"
         }
       }
     }
@@ -225,10 +230,10 @@
   "scripts": {
     "vscode:prepublish": "npm run build",
     "build": "npm run build:ext && npm run build:ui",
-    "build:ext": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --platform=node --target=node20 --external:vscode --sourcemap --log-level=warning",
-    "build:ui": "vite build --config vite.config.ts",
-    "dev:ext": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --platform=node --target=node20 --external:vscode --sourcemap --watch",
-    "dev:ui": "vite build --config vite.config.ts --watch",
+    "build:ext": "node node_modules/esbuild/bin/esbuild src/extension.ts --bundle --outfile=dist/extension.js --platform=node --target=node20 --external:vscode --sourcemap --log-level=warning",
+    "build:ui": "node node_modules/vite/bin/vite.js build --config vite.config.ts",
+    "dev:ext": "node node_modules/esbuild/bin/esbuild src/extension.ts --bundle --outfile=dist/extension.js --platform=node --target=node20 --external:vscode --sourcemap --watch",
+    "dev:ui": "node node_modules/vite/bin/vite.js build --config vite.config.ts --watch",
     "test": "jest",
     "lint": "eslint src --ext ts,tsx --max-warnings 0",
     "package": "vsce package --no-dependencies"

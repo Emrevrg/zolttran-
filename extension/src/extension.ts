@@ -60,6 +60,11 @@ export function activate(context: vscode.ExtensionContext): void {
   applyConfig(context);
   registerCommands(context);
 
+  // Opsiyonel: başlangıçta paneli otomatik aç (varsayılan kapalı)
+  if (vscode.workspace.getConfiguration('zolttran').get('autoOpenPanel', false)) {
+    setTimeout(() => openOrReveal(context), 400);
+  }
+
   logger.info('Zolttran hazır.');
 }
 
@@ -114,8 +119,8 @@ function openOrReveal(context: vscode.ExtensionContext): void {
   );
 
   panel.iconPath = {
-    light: vscode.Uri.joinPath(context.extensionUri, 'resources', 'icons', 'zolttran-light.svg'),
-    dark:  vscode.Uri.joinPath(context.extensionUri, 'resources', 'icons', 'zolttran-dark.svg'),
+    light: vscode.Uri.joinPath(context.extensionUri, 'resources', 'icons', 'zolttran-tab.png'),
+    dark:  vscode.Uri.joinPath(context.extensionUri, 'resources', 'icons', 'zolttran-tab.png'),
   };
   panel.webview.html = buildHtml(panel.webview, context.extensionUri);
 
@@ -288,6 +293,10 @@ async function handleMsg(msg: WebviewToExtension, context: vscode.ExtensionConte
 
     case 'cancel-agent':
       taskScheduler.cancel(msg.payload.taskId);
+      break;
+
+    case 'run-godot-bridge':
+      await connectGodotBridge();
       break;
   }
 }

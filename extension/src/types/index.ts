@@ -514,6 +514,7 @@ export type WebviewToExtension =
   | { type: 'cancel-agent'; payload: { taskId: string } }
   | { type: 'set-orchestrator-mode'; payload: { mode: OrchestratorMode } }
   | { type: 'set-godot-path'; payload: { path: string } }
+  | { type: 'run-godot-bridge' }
   | { type: 'get-state' };
 
 // Messages: extension → webview
