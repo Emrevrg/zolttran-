@@ -5,7 +5,7 @@
 import React from 'react';
 import {
   DraftingCompass, Code2, Palette, Bug, Rocket, Gamepad2, Play, Square, RotateCw,
-  Globe, MonitorSmartphone, Terminal, Package, Plug, Settings2, type LucideIcon,
+  Globe, Monitor, Terminal, Smartphone, Apple, Package, Plug, Settings2, type LucideIcon,
 } from 'lucide-react';
 import { useStore } from '../store.js';
 import type { AgentType, Platform } from '../../types/index.js';
@@ -20,8 +20,11 @@ const AGENTS: Array<{ type: AgentType; icon: LucideIcon; label: string; color: s
 
 const BUILD_TARGETS: Array<{ id: Platform; label: string; icon: LucideIcon }> = [
   { id: 'web',     label: 'Web',     icon: Globe },
-  { id: 'windows', label: 'Windows', icon: MonitorSmartphone },
+  { id: 'windows', label: 'Windows', icon: Monitor },
+  { id: 'macos',   label: 'macOS',   icon: Apple },
   { id: 'linux',   label: 'Linux',   icon: Terminal },
+  { id: 'android', label: 'Android', icon: Smartphone },
+  { id: 'ios',     label: 'iOS',     icon: Smartphone },
 ];
 
 const STATUS_DOT: Record<string, string> = {

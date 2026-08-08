@@ -1,0 +1,16 @@
+.vscode/**
+src/**
+node_modules/**
+**/*.map
+**/*.ts
+!dist/**/*.js
+tsconfig.json
+tsconfig.*.json
+vite.config.*
+tailwind.config.*
+postcss.config.*
+.eslintrc*
+**/.gitignore
+**/tsconfig.tsbuildinfo
+scratchpad/**
+*.vsix

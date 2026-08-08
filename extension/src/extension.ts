@@ -34,8 +34,9 @@ import { security }          from './utils/security.js';
 // Module-level state
 // ---------------------------------------------------------------------------
 
-let panel: vscode.WebviewPanel | undefined;
+let view: vscode.WebviewView | undefined;
 let outputChannel: vscode.OutputChannel;
+let eventsWired = false;
 // Cached vscode API reference — acquireVsCodeApi() may only be called ONCE
 // This is handled in the webview (store.ts), not here. In extension.ts we
 // communicate via panel.webview.postMessage directly.
@@ -60,17 +61,22 @@ export function activate(context: vscode.ExtensionContext): void {
   void loadApiKeys(context);
   applyConfig(context);
   registerCommands(context);
+  wireGlobalEvents();
 
-  // Opsiyonel: başlangıçta paneli otomatik aç (varsayılan kapalı)
-  if (vscode.workspace.getConfiguration('zolttran').get('autoOpenPanel', false)) {
-    setTimeout(() => openOrReveal(context), 400);
-  }
+  // Sidebar webview view provider — UI, ayrı editör sekmesi yerine
+  // aktivite çubuğundaki Zolttran panelinde açılır (diğer eklentiler gibi).
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(
+      'zolttran.mainPanel',
+      new ZolttranViewProvider(context),
+      { webviewOptions: { retainContextWhenHidden: true } },
+    ),
+  );
 
   logger.info('Zolttran hazır.');
 }
 
 export function deactivate(): void {
-  panel?.dispose();
   void liveServer.stop();
   hotReloadWatcher.stop();
   logger.info('Zolttran kapatıldı.');
@@ -82,16 +88,16 @@ export function deactivate(): void {
 
 function registerCommands(context: vscode.ExtensionContext): void {
   const cmds: Array<[string, () => unknown]> = [
-    ['zolttran.openPanel',      () => openOrReveal(context)],
-    ['zolttran.newGame',        () => { openOrReveal(context); post({ type: 'notification', payload: { level: 'info', message: '💬 Chat paneline oyununuzu tarif edin!' } }); }],
+    ['zolttran.openPanel',      () => void focusView()],
+    ['zolttran.newGame',        () => { void focusView(); post({ type: 'notification', payload: { level: 'info', message: 'Chat paneline oyununuzu tarif edin!' } }); }],
     ['zolttran.buildAll',       () => void handleBuildAll()],
     ['zolttran.runPreview',     () => void handleRunPreview()],
-    ['zolttran.openSettings',   () => { openOrReveal(context); post({ type: 'notification', payload: { level: 'info', message: '⚙️ Config sekmesini açın.' } }); }],
+    ['zolttran.openSettings',   () => { void focusView(); post({ type: 'notification', payload: { level: 'info', message: 'Config sekmesini açın.' } }); }],
     ['zolttran.toggleFreeMode', () => void toggleFreeMode(context)],
     ['zolttran.openMemoryBank', () => void openMemoryBank()],
     ['zolttran.runGodotBridge', () => void connectGodotBridge()],
-    ['zolttran.deployPlatform', () => openOrReveal(context)],
-    ['zolttran.showAgentPanel', () => { openOrReveal(context); post({ type: 'state-update', payload: { activeTab: 'agent' } }); }],
+    ['zolttran.deployPlatform', () => void focusView()],
+    ['zolttran.showAgentPanel', () => { void focusView(); post({ type: 'state-update', payload: { activeTab: 'agent' } }); }],
   ];
   for (const [id, fn] of cmds) {
     context.subscriptions.push(vscode.commands.registerCommand(id, fn));
@@ -102,44 +108,56 @@ function registerCommands(context: vscode.ExtensionContext): void {
 // Webview panel
 // ---------------------------------------------------------------------------
 
-function openOrReveal(context: vscode.ExtensionContext): void {
-  if (panel) { panel.reveal(vscode.ViewColumn.Two); return; }
+/**
+ * Zolttran UI'yı aktivite çubuğundaki panelde (sidebar) render eden provider.
+ * Ayrı editör sekmesi açmaz — diğer eklentiler gibi davranır.
+ */
+class ZolttranViewProvider implements vscode.WebviewViewProvider {
+  constructor(private readonly context: vscode.ExtensionContext) {}
 
-  panel = vscode.window.createWebviewPanel(
-    'zolttran.mainPanel',
-    'Zolttran',
-    vscode.ViewColumn.Two,
-    {
+  resolveWebviewView(webviewView: vscode.WebviewView): void {
+    view = webviewView;
+
+    webviewView.webview.options = {
       enableScripts: true,
-      retainContextWhenHidden: true,
       localResourceRoots: [
-        vscode.Uri.joinPath(context.extensionUri, 'dist'),
-        vscode.Uri.joinPath(context.extensionUri, 'resources'),
+        vscode.Uri.joinPath(this.context.extensionUri, 'dist'),
+        vscode.Uri.joinPath(this.context.extensionUri, 'resources'),
       ],
-    },
-  );
+    };
+    webviewView.webview.html = buildHtml(webviewView.webview, this.context.extensionUri);
 
-  panel.iconPath = {
-    light: vscode.Uri.joinPath(context.extensionUri, 'resources', 'icons', 'zolttran-tab.png'),
-    dark:  vscode.Uri.joinPath(context.extensionUri, 'resources', 'icons', 'zolttran-tab.png'),
-  };
-  panel.webview.html = buildHtml(panel.webview, context.extensionUri);
+    webviewView.webview.onDidReceiveMessage(
+      (msg: WebviewToExtension) => void handleMsg(msg, this.context),
+      undefined,
+      this.context.subscriptions,
+    );
 
-  // Message routing
-  panel.webview.onDidReceiveMessage(
-    (msg: WebviewToExtension) => void handleMsg(msg, context),
-    undefined,
-    context.subscriptions,
-  );
+    webviewView.onDidDispose(() => { view = undefined; }, null, this.context.subscriptions);
 
-  panel.onDidDispose(() => {
-    panel = undefined;
-    hotReloadWatcher.stop();
-    void liveServer.stop();
-    void vscode.commands.executeCommand('setContext', 'zolttran.active', false);
-  }, null, context.subscriptions);
+    // Görünürlük değişince güncel state gönder
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) post({ type: 'state-update', payload: buildSnapshot() });
+    }, null, this.context.subscriptions);
 
-  // Wire up event forwarding
+    void vscode.commands.executeCommand('setContext', 'zolttran.active', true);
+    post({ type: 'state-update', payload: buildSnapshot() });
+  }
+}
+
+/** Aktivite çubuğundaki Zolttran panelini öne getir/odakla. */
+async function focusView(): Promise<void> {
+  await vscode.commands.executeCommand('zolttran.mainPanel.focus');
+}
+
+/**
+ * Orchestrator / build / preview olaylarını bir kez global olarak bağla.
+ * post() her zaman güncel view'a yönlendirir; view yaşam döngüsünden bağımsız.
+ */
+function wireGlobalEvents(): void {
+  if (eventsWired) return;
+  eventsWired = true;
+
   liveServer.onStateChange((state) => post({ type: 'preview-update', payload: { state } }));
 
   orchestrator.on((event) => {
@@ -153,8 +171,6 @@ function openOrReveal(context: vscode.ExtensionContext): void {
 
   deployManager.onBuildUpdate((result) => post({ type: 'build-update', payload: { result } }));
   taskScheduler.onUpdate((task) => post({ type: 'agent-update', payload: { task } }));
-
-  void vscode.commands.executeCommand('setContext', 'zolttran.active', true);
 }
 
 // ---------------------------------------------------------------------------
@@ -322,7 +338,7 @@ async function handleMsg(msg: WebviewToExtension, context: vscode.ExtensionConte
 // ---------------------------------------------------------------------------
 
 function post(msg: ExtensionToWebview): void {
-  panel?.webview.postMessage(msg);
+  void view?.webview.postMessage(msg);
 }
 
 function buildSnapshot(): Partial<AppState> {
