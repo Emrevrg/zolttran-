@@ -19,6 +19,7 @@ import type {
 
 import { providerManager }   from './providers/provider-manager.js';
 import { intelligentRouter } from './providers/intelligent-router.js';
+import { freeModelRotator }  from './providers/free-model-rotator.js';
 import { orchestrator }      from './agent/orchestrator.js';
 import { memoryBank }        from './agent/memory-bank.js';
 import { generateGameOffline, detectGameType } from './agent/offline-generator.js';
@@ -240,7 +241,13 @@ async function handleMsg(msg: WebviewToExtension, context: vscode.ExtensionConte
       await context.globalState.update('zolttran.freeMode', enabled);
       providerManager.setFreeMode(enabled);
       intelligentRouter.setFreeMode(enabled);
-      post({ type: 'toast', payload: { message: `FREE MODE ${enabled ? 'AKTİF 🆓' : 'KAPALI'}`, type: enabled ? 'success' : 'info', duration: 2500 } });
+      post({ type: 'toast', payload: { message: `FREE MODE ${enabled ? 'AKTİF' : 'KAPALI'}`, type: enabled ? 'success' : 'info', duration: 2500 } });
+      break;
+    }
+
+    case 'set-free-exclusions': {
+      freeModelRotator.setExcludedProviders(msg.payload.providerIds as string[]);
+      await context.globalState.update('zolttran.freeExcluded', msg.payload.providerIds);
       break;
     }
 

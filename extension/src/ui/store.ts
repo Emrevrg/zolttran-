@@ -37,6 +37,7 @@ interface AppActions {
   // Provider
   setActiveProvider: (id: ProviderID, model: string) => void;
   setFreeMode: (v: boolean) => void;
+  toggleFreeExclusion: (id: ProviderID) => void;
   setProviderStatus: (id: ProviderID, status: 'connected' | 'error' | 'unconfigured') => void;
   setCost: (today: number, total: number) => void;
 
@@ -86,6 +87,7 @@ const INITIAL_STATE: AppState = {
   activeModelId: 'auto',
   freeMode: true,
   providerStatuses: {},
+  freeExcluded: [],
   costToday: 0,
   costTotal: 0,
   messages: [],
@@ -128,6 +130,12 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
   setFreeMode: (v) => {
     set({ freeMode: v });
     get().postMessage({ type: 'toggle-free-mode', payload: { enabled: v } });
+  },
+  toggleFreeExclusion: (id) => {
+    const cur = get().freeExcluded;
+    const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
+    set({ freeExcluded: next });
+    get().postMessage({ type: 'set-free-exclusions', payload: { providerIds: next } });
   },
   setProviderStatus: (id, status) =>
     set((s) => ({ providerStatuses: { ...s.providerStatuses, [id]: status } })),

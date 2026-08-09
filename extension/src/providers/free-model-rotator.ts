@@ -44,6 +44,15 @@ export class FreeModelRotator {
   };
 
   private listeners: Array<(entry: FreeModelEntry) => void> = [];
+  private excludedProviders = new Set<string>();
+
+  /** Kullanıcı bazı provider'ları FREE rotasyonundan çıkarabilir. */
+  setExcludedProviders(ids: string[]): void {
+    this.excludedProviders = new Set(ids);
+  }
+  getExcludedProviders(): string[] {
+    return [...this.excludedProviders];
+  }
 
   // -----------------------------------------------------------------------
   // Public API
@@ -133,6 +142,7 @@ export class FreeModelRotator {
     const now = Date.now();
     return this.state.models
       .filter((m) => {
+        if (this.excludedProviders.has(m.providerId)) return false;
         if (!m.available) {
           // Check if cooldown expired
           if (m.lastFailTime && now - m.lastFailTime > FAIL_COOLDOWN_MS) {

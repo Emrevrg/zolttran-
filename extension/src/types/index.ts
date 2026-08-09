@@ -519,6 +519,7 @@ export type WebviewToExtension =
   | { type: 'set-api-key'; payload: { providerId: ProviderID; key: string } }
   | { type: 'test-provider'; payload: { providerId: ProviderID } }
   | { type: 'toggle-free-mode'; payload: { enabled: boolean } }
+  | { type: 'set-free-exclusions'; payload: { providerIds: ProviderID[] } }
   | { type: 'new-game'; payload: { prompt: string; gameType: GameType } }
   | { type: 'run-preview' }
   | { type: 'stop-preview' }
@@ -562,6 +563,7 @@ export interface AppState {
   activeModelId: string;
   freeMode: boolean;
   providerStatuses: Partial<Record<ProviderID, 'connected' | 'error' | 'unconfigured'>>;
+  freeExcluded: ProviderID[];
   costToday: number;
   costTotal: number;
 
