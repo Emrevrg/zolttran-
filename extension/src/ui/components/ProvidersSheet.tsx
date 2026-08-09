@@ -65,11 +65,11 @@ export function ProvidersSheet({ open, onClose }: { open: boolean; onClose: () =
           <div className="glass-muted flex items-center gap-2" style={{ padding: '12px 14px' }}>
             <FolderCog size={15} strokeWidth={1.75} style={{ color: godotDetectedPath ? 'var(--z-success)' : 'var(--z-txt-2)', flexShrink: 0 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 600, fontSize: 13 }}>Godot Motoru</div>
+              <div style={{ fontWeight: 600, fontSize: 13 }}>Zolttran Engine</div>
               <div className="zxs zmuted">
                 {godotDetectedPath
-                  ? `Godot ${godotDetectedVersion?.split('.').slice(0, 2).join('.') ?? ''} hazır — otomatik yönetiliyor`
-                  : 'İlk derlemede otomatik indirilip kurulur. Sen hiç uğraşmazsın.'}
+                  ? 'Gömülü oyun motoru hazır — otomatik yönetiliyor'
+                  : 'İlk derlemede motor otomatik hazırlanır. Sen hiç uğraşmazsın.'}
               </div>
             </div>
             {godotDetectedPath && <CheckCircle2 size={16} strokeWidth={2} style={{ color: 'var(--z-success)', flexShrink: 0 }} />}

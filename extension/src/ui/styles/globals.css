@@ -673,3 +673,22 @@ body{ font-feature-settings:"cv02","cv03","cv04","ss01"; -webkit-font-smoothing:
 .zstage-bar{ min-width:0; }
 .zstage-title{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1 1 auto; min-width:0; }
 .zstage-bar > .ml-auto{ flex-shrink:0; }
+
+/* v8 — kompakt starter çipleri (native/premium boş ekran) */
+.zchips{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:540px; margin-top:8px; }
+.zchip-starter{ display:inline-flex; align-items:center; gap:7px; font-size:12.5px; font-weight:600;
+  color:var(--z-txt-2); background:rgba(255,255,255,0.035); border:1px solid var(--z-border);
+  border-radius:999px; padding:8px 14px; cursor:pointer; transition:background .15s,color .15s,border-color .15s,transform .15s; }
+.zchip-starter:hover{ color:#fff; background:var(--z-primary-dim); border-color:var(--z-primary-bdr); transform:translateY(-1px); }
+
+/* v8 — boş ekran (hero) yatay taşma koruması */
+.zconvo{ overflow-x:hidden; min-width:0; }
+.zhero{ box-sizing:border-box; max-width:100%; min-width:0; }
+.zhero > *{ max-width:100%; box-sizing:border-box; }
+.zhero .zcomposer{ width:100%; }
+
+/* v8 — dar genişlikte composer barı sar, panel taşmasın */
+.zcomposer{ min-width:0; }
+.zcomposer-bar{ flex-wrap:wrap; row-gap:8px; }
+.ztopbar{ overflow:hidden; }
+.ztopbar .zstat{ min-width:0; white-space:nowrap; }

@@ -289,7 +289,7 @@ async function handleMsg(msg: WebviewToExtension, context: vscode.ExtensionConte
 
     case 'build-platform': {
       const { platform } = msg.payload;
-      if (!await ensureGodotAvailable(context)) { post({ type: 'notification', payload: { level: 'warn', message: 'Godot gerekli — derleme için otomatik kurulumu onayla.' } }); break; }
+      if (!await ensureGodotAvailable(context)) { post({ type: 'notification', payload: { level: 'warn', message: 'Motor gerekli — derleme için hazırlığı onayla.' } }); break; }
       if (!await security.requestApproval(context, 'build', `${platform} build`)) break;
       post({ type: 'toast', payload: { message: `${platform} build başladı...`, type: 'info', duration: 3000 } });
       void deployManager.buildPlatform(platform as Platform);
@@ -378,7 +378,7 @@ async function handleRunPreview(): Promise<void> {
   if (!projectPath) { post({ type: 'error', payload: { message: 'Önce bir oyun üret — sonra çalıştır.' } }); return; }
 
   const godot = await ensureGodotAvailable(ctx);
-  if (!godot) { post({ type: 'notification', payload: { level: 'warn', message: 'Godot gerekli — önizleme için otomatik kurulumu onayla.' } }); return; }
+  if (!godot) { post({ type: 'notification', payload: { level: 'warn', message: 'Motor gerekli — önizleme için hazırlığı onayla.' } }); return; }
 
   const buildDir = path.join(projectPath, 'build', 'web');
   if (!fs.existsSync(path.join(buildDir, 'index.html'))) {
@@ -398,7 +398,7 @@ async function handleRunPreview(): Promise<void> {
 }
 
 async function handleBuildAll(): Promise<void> {
-  if (!await ensureGodotAvailable(ctx)) { post({ type: 'notification', payload: { level: 'warn', message: 'Godot gerekli — derleme için otomatik kurulumu onayla.' } }); return; }
+  if (!await ensureGodotAvailable(ctx)) { post({ type: 'notification', payload: { level: 'warn', message: 'Motor gerekli — derleme için hazırlığı onayla.' } }); return; }
   post({ type: 'state-update', payload: { isBuildingAll: true } });
   await deployManager.buildAll(['web', 'windows', 'linux']);
   post({ type: 'state-update', payload: { isBuildingAll: false } });
@@ -448,14 +448,14 @@ async function ensureGodotAvailable(context: vscode.ExtensionContext): Promise<s
   const stored = context.globalState.get<string>('zolttran.godotProvisioned');
   if (stored && fs.existsSync(stored)) { godotBridge.setGodotPath(stored); return stored; }
 
-  if (godotProvisioning) { vscode.window.showInformationMessage('Godot zaten indiriliyor…'); return null; }
+  if (godotProvisioning) { vscode.window.showInformationMessage('Zolttran Engine zaten hazırlanıyor…'); return null; }
   if (!platformAsset()) {
-    vscode.window.showWarningMessage('Bu platformda Godot otomatik indirilemiyor. Lütfen Godot 4.3+ kurun.');
+    vscode.window.showWarningMessage('Bu platformda motor otomatik hazırlanamıyor.');
     return null;
   }
 
   const choice = await vscode.window.showInformationMessage(
-    `Zolttran oyunları derlemek için Godot ${GODOT_LABEL} kullanır. Tek seferlik otomatik indirilsin mi? (~110 MB)`,
+    `Zolttran Engine ilk kez hazırlanacak (tek seferlik, ~110 MB). Devam edilsin mi?`,
     'İndir ve Kur', 'Vazgeç');
   if (choice !== 'İndir ve Kur') return null;
 
@@ -463,7 +463,7 @@ async function ensureGodotAvailable(context: vscode.ExtensionContext): Promise<s
   try {
     const dir = path.join(context.globalStorageUri.fsPath, 'godot');
     const exe = await vscode.window.withProgress(
-      { location: vscode.ProgressLocation.Notification, title: `Godot ${GODOT_LABEL} indiriliyor…`, cancellable: false },
+      { location: vscode.ProgressLocation.Notification, title: `Zolttran Engine hazırlanıyor…`, cancellable: false },
       async (progress) => {
         let last = 0;
         return await provision(dir, (pct) => { progress.report({ increment: pct - last, message: `%${pct}` }); last = pct; });
@@ -472,10 +472,10 @@ async function ensureGodotAvailable(context: vscode.ExtensionContext): Promise<s
     await context.globalState.update('zolttran.godotProvisioned', exe);
     await vscode.workspace.getConfiguration('zolttran').update('godotPath', exe, vscode.ConfigurationTarget.Global);
     post({ type: 'godot-detected', payload: { path: exe, version: GODOT_LABEL } });
-    vscode.window.showInformationMessage('Godot hazır — artık oyunları derleyip oynayabilirsin.');
+    vscode.window.showInformationMessage('Zolttran Engine hazır — artık oyunları derleyip oynayabilirsin.');
     return exe;
   } catch (err) {
-    vscode.window.showErrorMessage(`Godot indirme başarısız: ${String(err)}. İnterneti kontrol edip tekrar dene.`);
+    vscode.window.showErrorMessage(`Motor hazırlığı başarısız: ${String(err)}. İnterneti kontrol edip tekrar dene.`);
     return null;
   } finally {
     godotProvisioning = false;

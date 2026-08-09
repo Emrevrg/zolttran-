@@ -37,9 +37,10 @@ export type Tab = 'chat' | 'stage' | 'inspect';
 export function Studio({ onOpenProviders, tab, setTab }: { onOpenProviders: () => void; tab: Tab; setTab: (t: Tab) => void }) {
   const {
     messages, isStreaming, currentStreamContent, ready, freeMode, costToday, godotConnected,
-    currentProject, currentGdd, activeTasks, preview,
+    godotDetectedPath, currentProject, currentGdd, activeTasks, preview,
     postMessage, addMessage, setStreaming,
   } = useStore();
+  const engineReady = !!godotDetectedPath || godotConnected;
   const [input, setInput] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [viewer, setViewer] = useState<Attachment | null>(null);
@@ -197,10 +198,10 @@ export function Studio({ onOpenProviders, tab, setTab }: { onOpenProviders: () =
         </span>
         <div className="ml-auto flex items-center gap-2">
           <span className="zstat"><span className={`zdot ${ready ? 'zdot-connected' : 'zdot-warning'}`} />{ready ? 'Hazır' : 'Bağlanıyor'}</span>
-          <span className="zstat" style={{ opacity: godotConnected ? 1 : 0.55 }}>
-            <Gamepad2 size={13} strokeWidth={1.75} style={{ color: godotConnected ? 'var(--z-success)' : 'inherit' }} />
-            Godot
-            <span className={`zdot ${godotConnected ? 'zdot-connected' : 'zdot-idle'}`} style={{ width: 5, height: 5 }} />
+          <span className="zstat" style={{ opacity: engineReady ? 1 : 0.6 }}>
+            <Gamepad2 size={13} strokeWidth={1.75} style={{ color: engineReady ? 'var(--z-success)' : 'inherit' }} />
+            Engine
+            <span className={`zdot ${engineReady ? 'zdot-connected' : 'zdot-idle'}`} style={{ width: 5, height: 5 }} />
           </span>
           {freeMode ? <span className="zchip zchip-free">FREE</span> : <span className="zstat">${costToday.toFixed(3)}</span>}
         </div>
@@ -213,16 +214,12 @@ export function Studio({ onOpenProviders, tab, setTab }: { onOpenProviders: () =
             <h1 className="zhero-title">Ne inşa edelim?</h1>
             <p className="zhero-sub">Tek bir cümle yaz — Zolttran tasarımdan derlemeye kadar her şeyi kendi halleder.</p>
             {composer(true)}
-            <div className="zstarters">
+            <div className="zchips">
               {STARTERS.map((s) => {
                 const Icon = s.icon;
                 return (
-                  <button key={s.title} className="zstarter" onClick={() => pick(s.text)}>
-                    <span className="zstarter-ic"><Icon size={16} strokeWidth={1.75} /></span>
-                    <div style={{ minWidth: 0 }}>
-                      <div className="zsm" style={{ fontWeight: 600 }}>{s.title}</div>
-                      <div className="zxs zmuted zclamp">{s.text}</div>
-                    </div>
+                  <button key={s.title} className="zchip-starter" onClick={() => pick(s.text)} title={s.text}>
+                    <Icon size={14} strokeWidth={1.9} /> {s.title}
                   </button>
                 );
               })}

@@ -37,7 +37,7 @@ export default function App() {
       case 'godot-status':    setGodotConnected(msg.payload.connected, msg.payload.method); break;
       case 'godot-detected':
         hydrate({ godotDetectedPath: msg.payload.path, godotDetectedVersion: msg.payload.version });
-        addToast({ message: `Godot ${msg.payload.version.split('.').slice(0, 2).join('.')} otomatik bulundu — hazır`, type: 'success', duration: 4000 });
+        addToast({ message: 'Zolttran Engine hazır — oyunları derleyip oynayabilirsin', type: 'success', duration: 4000 });
         break;
       case 'provider-status': setProviderStatus(msg.payload.providerId, msg.payload.status === 'ok' ? 'connected' : 'error'); break;
       case 'toast':           addToast({ message: msg.payload.message, type: msg.payload.type, duration: msg.payload.duration }); break;

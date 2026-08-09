@@ -42,7 +42,7 @@ export function Inspector({ onOpenProviders }: { onOpenProviders: () => void }) 
   const {
     agentStatuses, activeTasks, completedTasks,
     currentProject, currentGdd, buildResults, isBuildingAll,
-    godotConnected, godotBridgeMethod, postMessage,
+    godotConnected, postMessage,
   } = useStore();
 
   const anyActive = Object.values(agentStatuses).some((s) => s === 'executing' || s === 'thinking');
@@ -140,8 +140,7 @@ export function Inspector({ onOpenProviders }: { onOpenProviders: () => void }) 
       <div className="zinspect-sec">
         <div className="zrail-build">
           <Plug size={13} strokeWidth={1.8} style={{ color: godotConnected ? 'var(--z-success)' : 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
-          <span className="zsm" style={{ flex: 1 }}>{godotConnected ? `Godot bağlı (${godotBridgeMethod?.toUpperCase() ?? 'MCP'})` : 'Godot bağlı değil'}</span>
-          {!godotConnected && <button className="zbtn-link zxs" onClick={() => postMessage({ type: 'run-godot-bridge' })}>Bağlan</button>}
+          <span className="zsm" style={{ flex: 1 }}>{godotConnected ? 'Zolttran Engine · canlı köprü' : 'Zolttran Engine · gömülü motor'}</span>
         </div>
         <button className="zbtn zbtn-ghost zsm w-full justify-center" style={{ marginTop: 6 }} onClick={onOpenProviders}>
           <Settings2 size={13} strokeWidth={1.8} /> Provider'ları Yönet
