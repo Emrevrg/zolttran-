@@ -9,6 +9,7 @@ import { godotBridge } from './godot-bridge.js';
 import { sceneBuilder } from './scene-builder.js';
 import { scriptGenerator } from './script-generator.js';
 import { GAME_TEMPLATES } from '../agent/prompts/game-templates.js';
+import { androidKeystorePath } from './godot-provisioner.js';
 
 export interface ScaffoldOptions {
   outputPath: string;
@@ -265,7 +266,7 @@ interact={
         return `[preset.${idx}]\n\nname="Windows Desktop"\nplatform="Windows Desktop"\nrunnable=true\ndedicated_server=false\ncustom_features=""\nexport_filter="all_resources"\ninclude_filter=""\nexclude_filter=""\nexport_path="build/windows/game.exe"\nencrypt_pck=false\nencrypt_directory=false\nscript_export_mode=1\n\n[preset.${idx}.options]\n\ncustom_template/debug=""\ncustom_template/release=""\ndebug/export_console_wrapper=1\nbinary_format/embed_pck=true\ntexture_format/bptc=true\ntexture_format/s3tc=true\ntexture_format/etc2=false\nbinary_format/architecture="x86_64"`;
 
       case 'android':
-        return `[preset.${idx}]\n\nname="Android"\nplatform="Android"\nrunnable=true\ndedicated_server=false\ncustom_features=""\nexport_filter="all_resources"\ninclude_filter=""\nexclude_filter=""\nexport_path="build/android/game.apk"\nencrypt_pck=false\nencrypt_directory=false\nscript_export_mode=1\n\n[preset.${idx}.options]\n\ncustom_template/debug=""\ncustom_template/release=""\ngradlebuild/use_gradle_build=false\ngradlebuild/export_format=0\ngradlebuild/min_sdk=21\ngradlebuild/target_sdk=33\npackager/unique_name="com.zolttran.game"\npackager/name="Game"\npackager/icon=""\npackager/signed=false\narchitectures/armv7=false\narchitectures/arm64_v8a=true`;
+        return `[preset.${idx}]\n\nname="Android"\nplatform="Android"\nrunnable=true\ndedicated_server=false\ncustom_features=""\nexport_filter="all_resources"\ninclude_filter=""\nexclude_filter=""\nexport_path="build/android/game.apk"\nencrypt_pck=false\nencrypt_directory=false\nscript_export_mode=1\n\n[preset.${idx}.options]\n\ncustom_template/debug=""\ncustom_template/release=""\ngradlebuild/use_gradle_build=false\ngradlebuild/export_format=0\ngradlebuild/min_sdk=21\ngradlebuild/target_sdk=33\npackager/unique_name="com.zolttran.game"\npackager/name="Game"\npackager/icon=""\npackager/signed=false\narchitectures/armv7=false\narchitectures/arm64_v8a=true\nkeystore/debug="${androidKeystorePath().replace(/\\/g, '/')}"\nkeystore/debug_user="androiddebugkey"\nkeystore/debug_password="android"`;
 
       case 'linux':
         return `[preset.${idx}]\n\nname="Linux/X11"\nplatform="Linux/X11"\nrunnable=true\ndedicated_server=false\ncustom_features=""\nexport_filter="all_resources"\ninclude_filter=""\nexclude_filter=""\nexport_path="build/linux/game.x86_64"\nencrypt_pck=false\nencrypt_directory=false\nscript_export_mode=1\n\n[preset.${idx}.options]\n\nbinary_format/architecture="x86_64"`;

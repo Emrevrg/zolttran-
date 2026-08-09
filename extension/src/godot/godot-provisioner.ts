@@ -112,6 +112,44 @@ export function defaultStorageDir(): string {
 }
 
 // ---------------------------------------------------------------------------
+// Android debug imzası — kullanıcı keystore ile uğraşmasın
+// ---------------------------------------------------------------------------
+
+export function androidKeystorePath(): string {
+  return path.join(os.homedir(), '.zolttran', 'debug.keystore');
+}
+
+function findKeytool(): string | null {
+  const names = process.platform === 'win32' ? ['keytool.exe', 'keytool'] : ['keytool'];
+  const cands: string[] = [...names];
+  if (process.env['JAVA_HOME']) cands.unshift(path.join(process.env['JAVA_HOME'], 'bin', names[0]));
+  for (const c of cands) {
+    try { cp.execFileSync(c, ['-help'], { stdio: 'ignore', timeout: 5000, windowsHide: true }); return c; }
+    catch { /* dene */ }
+  }
+  return null;
+}
+
+/** Standart Android debug keystore'unu üretir (yoksa). Yol döner; keytool yoksa null. */
+export function ensureAndroidKeystore(): string | null {
+  const ks = androidKeystorePath();
+  if (fs.existsSync(ks)) return ks;
+  const keytool = findKeytool();
+  if (!keytool) return null;
+  fs.mkdirSync(path.dirname(ks), { recursive: true });
+  try {
+    cp.execFileSync(keytool, [
+      '-keyalg', 'RSA', '-genkeypair', '-alias', 'androiddebugkey',
+      '-keypass', 'android', '-keystore', ks, '-storepass', 'android',
+      '-dname', 'CN=Android Debug,O=Android,C=US', '-validity', '9999', '-deststoretype', 'pkcs12',
+    ], { stdio: 'ignore', timeout: 30000, windowsHide: true });
+    return fs.existsSync(ks) ? ks : null;
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Export templates — web/masaüstü/mobil derlemesi için gerekli
 // ---------------------------------------------------------------------------
 

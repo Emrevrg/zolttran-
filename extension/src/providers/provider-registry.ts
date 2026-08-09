@@ -60,9 +60,11 @@ const NVIDIA_MODELS: ModelSpec[] = [
 ];
 
 const ANTHROPIC_MODELS: ModelSpec[] = [
-  m('claude-opus-4-8-20260201',   'Claude Opus 4.8',    200_000, 'premium', ['code-generation','game-design','reasoning','debugging'],    15, 75, { supportsTools: true }),
-  m('claude-sonnet-4-5-20260201', 'Claude Sonnet 4.5',  200_000, 'premium', ['code-generation','game-design','debugging'],               3, 15, { supportsTools: true }),
-  m('claude-haiku-4-0-20260201',  'Claude Haiku 4.0',   200_000, 'premium', ['code-generation','fast'],                                  0.25, 1.25, { supportsTools: true }),
+  m('claude-opus-5',              'Claude Opus 5',      200_000, 'premium', ['code-generation','game-design','reasoning','debugging'],    15, 75, { supportsTools: true }),
+  m('claude-opus-4-8',           'Claude Opus 4.8',    200_000, 'premium', ['code-generation','game-design','reasoning','debugging'],    15, 75, { supportsTools: true }),
+  m('claude-sonnet-5',           'Claude Sonnet 5',    200_000, 'premium', ['code-generation','game-design','debugging','reasoning'],    3, 15, { supportsTools: true }),
+  m('claude-fable-5',            'Claude Fable 5',     200_000, 'premium', ['code-generation','game-design','fast'],                     3, 15, { supportsTools: true }),
+  m('claude-haiku-4-5-20251001', 'Claude Haiku 4.5',   200_000, 'premium', ['code-generation','fast'],                                  1, 5, { supportsTools: true }),
 ];
 
 const OPENAI_MODELS: ModelSpec[] = [

@@ -29,7 +29,7 @@ import { generateGameOffline, detectGameType } from './agent/offline-generator.j
 import { taskScheduler }     from './agent/task-scheduler.js';
 import { godotBridge }       from './godot/godot-bridge.js';
 import { locateGodot }       from './godot/godot-locator.js';
-import { provision, platformAsset, GODOT_LABEL, templatesInstalled, provisionTemplates } from './godot/godot-provisioner.js';
+import { provision, platformAsset, GODOT_LABEL, templatesInstalled, provisionTemplates, ensureAndroidKeystore } from './godot/godot-provisioner.js';
 import { projectScaffolder } from './godot/project-scaffolder.js';
 import { deployManager }     from './build/deploy-manager.js';
 import { liveServer }        from './preview/live-server.js';
@@ -300,6 +300,10 @@ async function handleMsg(msg: WebviewToExtension, context: vscode.ExtensionConte
     case 'build-platform': {
       const { platform } = msg.payload;
       if (!await ensureGodotAvailable(context)) { post({ type: 'notification', payload: { level: 'warn', message: 'Motor gerekli — derleme için hazırlığı onayla.' } }); break; }
+      if (platform === 'android') {
+        const ks = ensureAndroidKeystore();
+        if (!ks) post({ type: 'notification', payload: { level: 'warn', message: 'Android imzası için Java (keytool) gerekli. Kurulu değilse APK imzalanamaz.' } });
+      }
       if (!await security.requestApproval(context, 'build', `${platform} build`)) break;
       post({ type: 'toast', payload: { message: `${platform} build başladı...`, type: 'info', duration: 3000 } });
       void deployManager.buildPlatform(platform as Platform);

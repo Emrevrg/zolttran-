@@ -213,7 +213,11 @@ export function Studio({ onOpenProviders, tab, setTab }: { onOpenProviders: () =
       {!active ? (
         <div className="zconvo">
           <div className="zhero">
-            <img src={ZOLTTRAN_MARK} alt="Zolttran" className="zhero-logo" draggable={false} />
+            <div className="zhero-mark">
+              <img src={ZOLTTRAN_MARK} alt="Zolttran" className="zhero-logo" draggable={false} />
+              <span className="zhero-ring" />
+              <span className="zhero-ring zhero-ring-2" />
+            </div>
             <h1 className="zhero-title">Ne inşa edelim?</h1>
             <p className="zhero-sub">Tek bir cümle yaz — Zolttran tasarımdan derlemeye kadar her şeyi kendi halleder.</p>
             {composer(true)}

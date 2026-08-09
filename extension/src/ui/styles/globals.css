@@ -717,3 +717,25 @@ body{ font-feature-settings:"cv02","cv03","cv04","ss01"; -webkit-font-smoothing:
 /* v10 — Projelerim kartı ikonu */
 .zproj-ic{ width:34px; height:34px; border-radius:9px; display:grid; place-items:center; flex-shrink:0;
   color:var(--z-secondary); background:var(--z-primary-dim); border:1px solid var(--z-primary-bdr); }
+
+/* v11 — sinematik poster havası (hero glow + holografik disk) + premium composer */
+.zconvo{ position:relative; }
+.zhero{ position:relative; }
+.zhero::before{ content:''; position:absolute; top:-20px; left:50%; transform:translateX(-50%);
+  width:720px; max-width:130%; height:460px; z-index:0; pointer-events:none;
+  background:radial-gradient(ellipse 60% 55% at center top, rgba(124,106,247,0.20), rgba(34,211,238,0.06) 45%, transparent 72%); }
+.zhero > *{ position:relative; z-index:1; }
+.zhero-mark{ position:relative; display:grid; place-items:center; margin-bottom:6px; }
+.zhero-logo{ position:relative; z-index:2; filter:drop-shadow(0 8px 34px rgba(124,106,247,0.55)); animation:zFloat 5s ease-in-out infinite; }
+@keyframes zFloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-7px); } }
+.zhero-ring{ position:absolute; left:50%; bottom:-14px; transform:translateX(-50%); width:150px; height:34px;
+  border-radius:50%; z-index:0; pointer-events:none;
+  background:radial-gradient(ellipse at center, rgba(124,106,247,0.55), rgba(124,106,247,0.10) 55%, transparent 72%);
+  filter:blur(2px); animation:zPulseRing 3.2s ease-in-out infinite; }
+.zhero-ring-2{ width:230px; height:52px; bottom:-24px; background:radial-gradient(ellipse at center, rgba(34,211,238,0.22), transparent 70%); animation-delay:.6s; }
+@keyframes zPulseRing{ 0%,100%{ opacity:.65; } 50%{ opacity:1; } }
+
+/* premium composer */
+.zcomposer{ background:linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015)); backdrop-filter:blur(8px); }
+.zcomposer:focus-within{ border-color:rgba(124,106,247,0.6); box-shadow:0 0 0 3px rgba(124,106,247,0.14), 0 14px 40px rgba(0,0,0,0.42); }
+.zsend.active{ background:linear-gradient(135deg, var(--z-primary), var(--z-accent)); box-shadow:0 4px 16px rgba(124,106,247,0.5); }
