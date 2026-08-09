@@ -4,7 +4,7 @@
   "description": "Hayalindeki oyunu gerçeğe dönüştür. 25 AI sağlayıcı, Godot 4.x entegrasyonu ve cross-platform deploy ile tam AI destekli oyun geliştirme platformu.",
   "version": "0.0.10",
   "publisher": "zolttran",
-  "license": "Apache-2.0",
+  "license": "AGPL-3.0-or-later",
   "icon": "resources/icons/zolttran-icon.png",
   "repository": {
     "type": "git",

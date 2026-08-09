@@ -8,7 +8,7 @@
 
 `v0.0.10` · Godot 4.3 ile uçtan uca doğrulandı · FREE MODE (anahtarsız) · MCP destekli
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg?style=flat-square)](LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/license-AGPL%20v3-blue.svg?style=flat-square)](LICENSE)
 
 </div>
 
@@ -114,6 +114,16 @@ Gerçek **Godot 4.3-stable** ile test edildi:
 - [ ] Ayrı, Tesana-benzeri standalone web uygulaması (eklentiden bağımsız)
 - [ ] Android/iOS için tam otomatik araç zinciri kurulumu
 - [ ] Daha fazla oyun kategorisi ve şablon
+
+---
+
+## Lisans
+
+Copyright (C) 2026 Zolttran (emrevrg).
+
+Bu proje **GNU Affero General Public License v3.0 (AGPL-3.0)** ile lisanslanmıştır — ayrıntılar için [LICENSE](LICENSE).
+
+Kısaca: kaynağı görebilir, çalıştırabilir ve değiştirebilirsin; ancak Zolttran'ı (veya üzerine kurulu bir servisi/türevi) dağıtan ya da ağ üzerinden sunan herkes, **kendi kaynak kodunu da aynı AGPL-3.0 ile açmak zorundadır.** Bu, kapalı-kaynak ticari kopyalamayı engeller. Farklı (ticari) koşullar için ayrı lisans anlaşması gerekir — iletişime geç.
 
 ---
 
