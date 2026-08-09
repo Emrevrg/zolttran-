@@ -100,62 +100,53 @@ export class GodotSceneBuilder {
    */
   buildPlayableMainScene(opts: {
     physics: '2d' | '3d';
+    playerScript?: string;     // res://scripts/player.gd (yoksa oyuncu düğümü eklenmez)
     worldScript?: string;      // res://scripts/xxx.gd
     worldNodeName?: string;
+    cameraScript?: string;     // oyuncusuz sahnelerde serbest kameraya bağlanır
   }): string {
     const uid = `uid://zolt${Date.now().toString(36)}`;
     return opts.physics === '3d' ? this.main3D(uid, opts) : this.main2D(uid, opts);
   }
 
-  private main2D(uid: string, opts: { worldScript?: string; worldNodeName?: string }): string {
-    const exts: string[] = [`[ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]`];
-    if (opts.worldScript) exts.push(`[ext_resource type="Script" path="${opts.worldScript}" id="2_world"]`);
-    const loadSteps = exts.length + 2; // ext + 1 subresource + scene
-    return `[gd_scene load_steps=${loadSteps} format=3 uid="${uid}"]
+  private main2D(uid: string, opts: { playerScript?: string; worldScript?: string; worldNodeName?: string; cameraScript?: string }): string {
+    const exts: string[] = [];
+    let id = 1;
+    const playerId = opts.playerScript ? `${id++}_player` : '';
+    if (opts.playerScript) exts.push(`[ext_resource type="Script" path="${opts.playerScript}" id="${playerId}"]`);
+    const worldId = opts.worldScript ? `${id++}_world` : '';
+    if (opts.worldScript) exts.push(`[ext_resource type="Script" path="${opts.worldScript}" id="${worldId}"]`);
+    const camId = opts.cameraScript ? `${id++}_cam` : '';
+    if (opts.cameraScript) exts.push(`[ext_resource type="Script" path="${opts.cameraScript}" id="${camId}"]`);
 
-${exts.join('\n')}
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_p"]
-size = Vector2(32, 48)
-
-[node name="Main" type="Node2D"]
-
-[node name="Ground" type="StaticBody2D" parent="."]
-position = Vector2(0, 620)
-
-[node name="GroundShape" type="CollisionShape2D" parent="Ground"]
-shape = SubResource("RectangleShape2D_p")
-
-[node name="GroundVisual" type="ColorRect" parent="Ground"]
-offset_left = -2000.0
-offset_top = -16.0
-offset_right = 2000.0
-offset_bottom = 16.0
-color = Color(0.13, 0.14, 0.2, 1)
-${opts.worldScript ? `
-[node name="${opts.worldNodeName ?? 'World'}" type="Node2D" parent="."]
-script = ExtResource("2_world")
-` : ''}
-[node name="Player" type="CharacterBody2D" parent="."]
-position = Vector2(480, 300)
-script = ExtResource("1_player")
-
-[node name="Visual" type="ColorRect" parent="Player"]
-offset_left = -16.0
-offset_top = -24.0
-offset_right = 16.0
-offset_bottom = 24.0
-color = Color(0.45, 0.72, 1, 1)
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
-shape = SubResource("RectangleShape2D_p")
-
-[node name="Camera2D" type="Camera2D" parent="Player"]
-`;
+    const parts: string[] = [`[gd_scene load_steps=${exts.length + 2} format=3 uid="${uid}"]`, '', ...exts, ''];
+    parts.push(`[sub_resource type="RectangleShape2D" id="RectangleShape2D_p"]`, `size = Vector2(32, 48)`, '');
+    parts.push(`[node name="Main" type="Node2D"]`, '');
+    if (opts.worldScript) {
+      parts.push(`[node name="${opts.worldNodeName ?? 'World'}" type="Node2D" parent="."]`, `script = ExtResource("${worldId}")`, '');
+    }
+    if (opts.playerScript) {
+      // Zemin (platformer için gerekli, diğerlerine zararsız)
+      parts.push(
+        `[node name="Ground" type="StaticBody2D" parent="."]`, `position = Vector2(0, 620)`, '',
+        `[node name="GroundShape" type="CollisionShape2D" parent="Ground"]`, `shape = SubResource("RectangleShape2D_p")`, '',
+        `[node name="GroundVisual" type="ColorRect" parent="Ground"]`, `offset_left = -2000.0`, `offset_top = -16.0`, `offset_right = 2000.0`, `offset_bottom = 16.0`, `color = Color(0.13, 0.14, 0.2, 1)`, '',
+        `[node name="Player" type="CharacterBody2D" parent="."]`, `position = Vector2(480, 300)`, `script = ExtResource("${playerId}")`, '',
+        `[node name="Visual" type="ColorRect" parent="Player"]`, `offset_left = -16.0`, `offset_top = -24.0`, `offset_right = 16.0`, `offset_bottom = 24.0`, `color = Color(0.45, 0.72, 1, 1)`, '',
+        `[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]`, `shape = SubResource("RectangleShape2D_p")`, '',
+        `[node name="Camera2D" type="Camera2D" parent="Player"]`, '',
+      );
+    } else {
+      // Oyuncusuz sahne (ör. strateji): serbest kamera
+      parts.push(`[node name="Camera2D" type="Camera2D" parent="."]${opts.cameraScript ? '' : ''}`);
+      if (opts.cameraScript) parts.push(`script = ExtResource("${camId}")`);
+      parts.push('');
+    }
+    return parts.join('\n');
   }
 
-  private main3D(uid: string, opts: { worldScript?: string; worldNodeName?: string }): string {
-    const exts: string[] = [`[ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]`];
+  private main3D(uid: string, opts: { playerScript?: string; worldScript?: string; worldNodeName?: string }): string {
+    const exts: string[] = [`[ext_resource type="Script" path="${opts.playerScript ?? 'res://scripts/player.gd'}" id="1_player"]`];
     if (opts.worldScript) exts.push(`[ext_resource type="Script" path="${opts.worldScript}" id="2_world"]`);
     const loadSteps = exts.length + 4; // ext + 3 subresources + scene
     return `[gd_scene load_steps=${loadSteps} format=3 uid="${uid}"]

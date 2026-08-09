@@ -48,9 +48,9 @@ export function buildGdd(prompt: string, gameType = detectGameType(prompt)): Gam
     gameType,
     description: d.description ?? prompt,
     genre: d.genre ?? ['action'],
-    // Tüm hedef platformlar için export preset üretilir; kullanıcı UI'dan
-    // istediğine build alır (masaüstü + web + mobil hepsi hazır).
-    targetPlatforms: d.targetPlatforms ?? ['web', 'windows', 'macos', 'linux', 'android', 'ios'],
+    // Canlı önizleme web tabanlı olduğundan 'web' HER ZAMAN dahildir; ayrıca
+    // şablonun hedef platformları eklenir (masaüstü + mobil).
+    targetPlatforms: Array.from(new Set(['web', ...(d.targetPlatforms ?? ['windows', 'macos', 'linux', 'android', 'ios'])])),
     mechanics: d.mechanics ?? [],
     systems: d.systems ?? [],
     scenes: d.scenes ?? [],

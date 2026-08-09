@@ -256,7 +256,7 @@ func _physics_process(delta: float) -> void:
 
 func take_damage(amount: float) -> void:
 \thealth -= amount
-\themit_signal("health_changed", health)
+\thealth_changed.emit(health)
 \tif health <= 0.0:
 \t\tdied.emit()
 `,

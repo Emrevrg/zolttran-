@@ -54,6 +54,7 @@ export class GodotProjectScaffolder {
     this.write(projectPath, 'export_presets.cfg', this.buildExportPresets(gdd.targetPlatforms), filesCreated);
 
     // Main scene — kendine yeten oynanabilir sahne (oyuncu + dünya scripti)
+    const tplScripts = GAME_TEMPLATES[gdd.gameType]?.baseScripts ?? {};
     const worldMap: Record<string, { script: string; node: string }> = {
       'bullet-heaven': { script: 'res://scripts/enemy_spawner.gd', node: 'EnemySpawner' },
       'roguelike':     { script: 'res://scripts/dungeon_generator.gd', node: 'DungeonGenerator' },
@@ -62,8 +63,10 @@ export class GodotProjectScaffolder {
     const world = worldMap[gdd.gameType];
     const mainScene = sceneBuilder.buildPlayableMainScene({
       physics: gdd.techRequirements.physics === '3d' ? '3d' : '2d',
+      playerScript: tplScripts['player.gd'] ? 'res://scripts/player.gd' : undefined,
       worldScript: world?.script,
       worldNodeName: world?.node,
+      cameraScript: tplScripts['camera_controller.gd'] ? 'res://scripts/camera_controller.gd' : undefined,
     });
     this.write(projectPath, 'scenes/main.tscn', mainScene, filesCreated);
 
@@ -119,9 +122,9 @@ export class GodotProjectScaffolder {
     const renderer = gdd.techRequirements.physics === '3d' ? 'forward_plus' : 'gl_compatibility';
     const autoloads = [
       '[autoload]',
-      'GameManager="*res://scripts/autoloads/game_manager.gd"',
-      'AudioManager="*res://scripts/autoloads/audio_manager.gd"',
-      ...(gdd.techRequirements.saveSystem ? ['SaveManager="*res://scripts/autoloads/save_manager.gd"'] : []),
+      'GameManager="*res://autoloads/game_manager.gd"',
+      'AudioManager="*res://autoloads/audio_manager.gd"',
+      ...(gdd.techRequirements.saveSystem ? ['SaveManager="*res://autoloads/save_manager.gd"'] : []),
     ].join('\n');
 
     const inputMap = this.buildInputMap(gdd.techRequirements.physics);

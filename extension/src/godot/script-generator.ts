@@ -15,6 +15,7 @@ export interface ScriptSpec {
   vars?: VarDef[];
   methods?: MethodDef[];
   content?: string; // raw override
+  skipClassName?: boolean; // autoload singleton'ları class_name almaz
 }
 
 interface ExportVar { name: string; type: string; defaultValue?: string; hint?: string }
@@ -39,7 +40,8 @@ export class GodotScriptGenerator {
 
     const lines: string[] = [];
 
-    lines.push(`class_name ${spec.className}`);
+    // Autoload scriptleri singleton adıyla çakışmasın diye class_name almaz.
+    if (spec.className && !spec.skipClassName) lines.push(`class_name ${spec.className}`);
     lines.push(`extends ${spec.extends}`);
     lines.push('');
 
@@ -49,12 +51,12 @@ export class GodotScriptGenerator {
       lines.push('');
     }
 
-    // Exports
+    // Exports — hint varsa geçerli Godot 4 anotasyonu (@export_range vb.)
     if (spec.exports?.length) {
       for (const exp of spec.exports) {
-        const hint = exp.hint ? `, ${exp.hint}` : '';
-        const def  = exp.defaultValue !== undefined ? ` = ${exp.defaultValue}` : '';
-        lines.push(`@export${hint} var ${exp.name}: ${exp.type}${def}`);
+        const ann = exp.hint ? `@export_${exp.hint}` : '@export';
+        const def = exp.defaultValue !== undefined ? ` = ${exp.defaultValue}` : '';
+        lines.push(`${ann} var ${exp.name}: ${exp.type}${def}`);
       }
       lines.push('');
     }
@@ -106,7 +108,7 @@ export class GodotScriptGenerator {
     // GameManager — always present
     autoloads['autoloads/game_manager.gd'] = this.generate({
       name: 'game_manager.gd',
-      className: 'GameManager',
+      className: 'GameManager', skipClassName: true,
       extends: 'Node',
       signals: ['game_started', 'game_paused', 'game_over'],
       exports: [
@@ -144,7 +146,7 @@ export class GodotScriptGenerator {
     // AudioManager
     autoloads['autoloads/audio_manager.gd'] = this.generate({
       name: 'audio_manager.gd',
-      className: 'AudioManager',
+      className: 'AudioManager', skipClassName: true,
       extends: 'Node',
       exports: [
         { name: 'bgm_volume_db', type: 'float', defaultValue: '0.0', hint: 'range(-80.0, 6.0)' },
@@ -178,7 +180,7 @@ export class GodotScriptGenerator {
     if (gdd.techRequirements.saveSystem) {
       autoloads['autoloads/save_manager.gd'] = this.generate({
         name: 'save_manager.gd',
-        className: 'SaveManager',
+        className: 'SaveManager', skipClassName: true,
         extends: 'Node',
         vars: [
           { name: 'SAVE_PATH', type: 'String', defaultValue: '"user://save.json"' },

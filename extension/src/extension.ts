@@ -26,7 +26,7 @@ import { generateGameOffline, detectGameType } from './agent/offline-generator.j
 import { taskScheduler }     from './agent/task-scheduler.js';
 import { godotBridge }       from './godot/godot-bridge.js';
 import { locateGodot }       from './godot/godot-locator.js';
-import { provision, platformAsset, GODOT_LABEL } from './godot/godot-provisioner.js';
+import { provision, platformAsset, GODOT_LABEL, templatesInstalled, provisionTemplates } from './godot/godot-provisioner.js';
 import { projectScaffolder } from './godot/project-scaffolder.js';
 import { deployManager }     from './build/deploy-manager.js';
 import { liveServer }        from './preview/live-server.js';
@@ -449,36 +449,53 @@ let godotProvisioning = false;
  * Döndürdüğü yol godotBridge'e ayarlanmıştır; null = kullanılamıyor.
  */
 async function ensureGodotAvailable(context: vscode.ExtensionContext): Promise<string | null> {
+  // 1) Binary'yi çöz (kurulu / daha önce indirilmiş / indir)
+  let exe: string | null = null;
   const det = locateGodot();
-  if (det) { godotBridge.setGodotPath(det.path); return det.path; }
+  if (det) { godotBridge.setGodotPath(det.path); exe = det.path; }
+  if (!exe) {
+    const stored = context.globalState.get<string>('zolttran.godotProvisioned');
+    if (stored && fs.existsSync(stored)) { godotBridge.setGodotPath(stored); exe = stored; }
+  }
 
-  const stored = context.globalState.get<string>('zolttran.godotProvisioned');
-  if (stored && fs.existsSync(stored)) { godotBridge.setGodotPath(stored); return stored; }
+  const needBinary = !exe;
+  const needTemplates = !templatesInstalled();
+  if (!needBinary && !needTemplates) return exe;
 
   if (godotProvisioning) { vscode.window.showInformationMessage('Zolttran Engine zaten hazırlanıyor…'); return null; }
-  if (!platformAsset()) {
+  if (needBinary && !platformAsset()) {
     vscode.window.showWarningMessage('Bu platformda motor otomatik hazırlanamıyor.');
     return null;
   }
 
+  // İndirme boyutunu dürüstçe bildir: binary ~57MB + export şablonları ~600MB
+  const sizeNote = needBinary && needTemplates ? '~660 MB' : needTemplates ? '~600 MB (export şablonları)' : '~57 MB';
   const choice = await vscode.window.showInformationMessage(
-    `Zolttran Engine ilk kez hazırlanacak (tek seferlik, ~110 MB). Devam edilsin mi?`,
+    `Zolttran Engine ilk kez hazırlanacak (tek seferlik, ${sizeNote}). Bu sayede oyunları derleyip oynatabilirsin. Devam edilsin mi?`,
     'İndir ve Kur', 'Vazgeç');
   if (choice !== 'İndir ve Kur') return null;
 
   godotProvisioning = true;
   try {
     const dir = path.join(context.globalStorageUri.fsPath, 'godot');
-    const exe = await vscode.window.withProgress(
-      { location: vscode.ProgressLocation.Notification, title: `Zolttran Engine hazırlanıyor…`, cancellable: false },
+    await vscode.window.withProgress(
+      { location: vscode.ProgressLocation.Notification, title: 'Zolttran Engine hazırlanıyor…', cancellable: false },
       async (progress) => {
-        let last = 0;
-        return await provision(dir, (pct) => { progress.report({ increment: pct - last, message: `%${pct}` }); last = pct; });
+        if (needBinary) {
+          let last = 0;
+          progress.report({ message: 'motor indiriliyor…' });
+          exe = await provision(dir, (pct) => { progress.report({ increment: (pct - last) * 0.15, message: `motor %${pct}` }); last = pct; });
+          godotBridge.setGodotPath(exe);
+          await context.globalState.update('zolttran.godotProvisioned', exe);
+          await vscode.workspace.getConfiguration('zolttran').update('godotPath', exe, vscode.ConfigurationTarget.Global);
+        }
+        if (needTemplates) {
+          let last = 0;
+          progress.report({ message: 'export şablonları indiriliyor…' });
+          await provisionTemplates(path.join(dir, 'templates'), (pct) => { progress.report({ increment: (pct - last) * 0.85, message: `şablonlar %${pct}` }); last = pct; });
+        }
       });
-    godotBridge.setGodotPath(exe);
-    await context.globalState.update('zolttran.godotProvisioned', exe);
-    await vscode.workspace.getConfiguration('zolttran').update('godotPath', exe, vscode.ConfigurationTarget.Global);
-    post({ type: 'godot-detected', payload: { path: exe, version: GODOT_LABEL } });
+    if (exe) post({ type: 'godot-detected', payload: { path: exe, version: GODOT_LABEL } });
     vscode.window.showInformationMessage('Zolttran Engine hazır — artık oyunları derleyip oynayabilirsin.');
     return exe;
   } catch (err) {

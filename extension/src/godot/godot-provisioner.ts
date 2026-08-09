@@ -110,3 +110,53 @@ export const GODOT_LABEL = GODOT_VERSION;
 export function defaultStorageDir(): string {
   return path.join(os.homedir(), '.zolttran', 'godot');
 }
+
+// ---------------------------------------------------------------------------
+// Export templates — web/masaüstü/mobil derlemesi için gerekli
+// ---------------------------------------------------------------------------
+
+/** Godot'un export template'lerini aradığı platforma özel dizin. */
+export function templatesDir(): string {
+  const ver = `${GODOT_VERSION.replace('-stable', '.stable')}`; // 4.3.stable
+  const home = os.homedir();
+  if (process.platform === 'win32') {
+    return path.join(process.env['APPDATA'] ?? path.join(home, 'AppData', 'Roaming'), 'Godot', 'export_templates', ver);
+  }
+  if (process.platform === 'darwin') {
+    return path.join(home, 'Library', 'Application Support', 'Godot', 'export_templates', ver);
+  }
+  return path.join(home, '.local', 'share', 'godot', 'export_templates', ver);
+}
+
+/** Web export template'i kuruluysa true. */
+export function templatesInstalled(): boolean {
+  try {
+    const dir = templatesDir();
+    return fs.existsSync(path.join(dir, 'web_nothreads_release.zip')) || fs.existsSync(path.join(dir, 'web_release.zip'));
+  } catch { return false; }
+}
+
+/**
+ * Export template'lerini indirir (.tpz) ve Godot'un beklediği dizine açar.
+ * ~600 MB — tüm platformlara derleme için tek seferlik.
+ */
+export async function provisionTemplates(tmpDir: string, onProgress?: (pct: number) => void): Promise<void> {
+  fs.mkdirSync(tmpDir, { recursive: true });
+  const url = `https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz`;
+  const tpz = path.join(tmpDir, 'templates.zip'); // .tpz = zip; Expand-Archive .zip ister
+  await download(url, tpz, onProgress);
+
+  const extractRoot = path.join(tmpDir, 'tpl_extract');
+  fs.rmSync(extractRoot, { recursive: true, force: true });
+  extractZip(tpz, extractRoot);
+
+  // .tpz içinde 'templates/' klasörü var; içeriğini hedef dizine düz kopyala
+  const inner = path.join(extractRoot, 'templates');
+  const src = fs.existsSync(inner) ? inner : extractRoot;
+  const dest = templatesDir();
+  fs.mkdirSync(dest, { recursive: true });
+  for (const name of fs.readdirSync(src)) {
+    fs.copyFileSync(path.join(src, name), path.join(dest, name));
+  }
+  try { fs.rmSync(tpz, { force: true }); fs.rmSync(extractRoot, { recursive: true, force: true }); } catch { /* yoksay */ }
+}
