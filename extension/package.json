@@ -2,7 +2,7 @@
   "name": "zolttran",
   "displayName": "Zolttran — AI Game Studio",
   "description": "Hayalindeki oyunu gerçeğe dönüştür. 25 AI sağlayıcı, Godot 4.x entegrasyonu ve cross-platform deploy ile tam AI destekli oyun geliştirme platformu.",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "publisher": "zolttran",
   "license": "Apache-2.0",
   "icon": "resources/icons/zolttran-icon.png",
@@ -89,6 +89,11 @@
       {
         "command": "zolttran.showAgentPanel",
         "title": "Zolttran: Agent Panelini Göster",
+        "category": "Zolttran"
+      },
+      {
+        "command": "zolttran.mcpConfig",
+        "title": "Zolttran: MCP Yapılandırmasını Kopyala (Claude Code / Codex)",
         "category": "Zolttran"
       }
     ],
@@ -272,8 +277,9 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run build",
-    "build": "npm run build:ext && npm run build:ui",
+    "build": "npm run build:ext && npm run build:ui && npm run build:mcp",
     "build:ext": "node node_modules/esbuild/bin/esbuild src/extension.ts --bundle --outfile=dist/extension.js --platform=node --target=node20 --external:vscode --sourcemap --log-level=warning",
+    "build:mcp": "node node_modules/esbuild/bin/esbuild src/mcp/server.ts --bundle --outfile=dist/mcp-server.js --platform=node --target=node20 --log-level=warning",
     "build:ui": "node node_modules/vite/bin/vite.js build --config vite.config.ts",
     "dev:ext": "node node_modules/esbuild/bin/esbuild src/extension.ts --bundle --outfile=dist/extension.js --platform=node --target=node20 --external:vscode --sourcemap --watch",
     "dev:ui": "node node_modules/vite/bin/vite.js build --config vite.config.ts --watch",

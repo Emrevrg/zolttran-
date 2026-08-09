@@ -69,6 +69,7 @@ export function activate(context: vscode.ExtensionContext): void {
   registerCommands(context);
   wireGlobalEvents();
   void autoDetectGodot(context);
+  void offerEngineSetup(context);
 
   // Sidebar webview view provider — UI, ayrı editör sekmesi yerine
   // aktivite çubuğundaki Zolttran panelinde açılır (diğer eklentiler gibi).
@@ -105,6 +106,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
     ['zolttran.runGodotBridge', () => void connectGodotBridge()],
     ['zolttran.deployPlatform', () => void focusView()],
     ['zolttran.showAgentPanel', () => { void focusView(); post({ type: 'state-update', payload: { activeTab: 'agent' } }); }],
+    ['zolttran.mcpConfig',      () => void showMcpConfig(context)],
   ];
   for (const [id, fn] of cmds) {
     context.subscriptions.push(vscode.commands.registerCommand(id, fn));
@@ -442,6 +444,36 @@ async function autoDetectGodot(context: vscode.ExtensionContext): Promise<void> 
 }
 
 let godotProvisioning = false;
+
+/**
+ * İlk açılışta motoru önden hazırlamayı teklif eder — kullanıcı ilk derlemede
+ * beklemesin. Tek sefer sorar; reddedilirse bir daha rahatsız etmez (yine de
+ * gerçek derlemede ensureGodotAvailable devreye girer).
+ */
+/** MCP sunucu yapılandırmasını gösterir ve panoya kopyalar (Claude Code / Codex). */
+async function showMcpConfig(context: vscode.ExtensionContext): Promise<void> {
+  const serverPath = path.join(context.extensionUri.fsPath, 'dist', 'mcp-server.js');
+  const config = JSON.stringify({ mcpServers: { zolttran: { command: 'node', args: [serverPath] } } }, null, 2);
+  const choice = await vscode.window.showInformationMessage(
+    'Zolttran MCP: Bu yapılandırmayı Claude Code / Codex MCP ayarlarına ekle.',
+    'Panoya Kopyala', 'Göster');
+  if (choice === 'Panoya Kopyala') {
+    await vscode.env.clipboard.writeText(config);
+    vscode.window.showInformationMessage('Zolttran MCP yapılandırması panoya kopyalandı.');
+  } else if (choice === 'Göster') {
+    const doc = await vscode.workspace.openTextDocument({ language: 'json', content: config });
+    await vscode.window.showTextDocument(doc);
+  }
+}
+
+async function offerEngineSetup(context: vscode.ExtensionContext): Promise<void> {
+  try {
+    if (locateGodot() || templatesInstalled()) return;
+    if (context.globalState.get<boolean>('zolttran.enginePromptDone')) return;
+    await context.globalState.update('zolttran.enginePromptDone', true);
+    await ensureGodotAvailable(context);
+  } catch { /* yoksay */ }
+}
 
 /**
  * Godot'un kullanılabilir olmasını garanti eder: bulunmuşsa onu kullanır,
