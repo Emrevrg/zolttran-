@@ -38,7 +38,7 @@ export function Studio({ onOpenProviders, tab, setTab }: { onOpenProviders: () =
   const {
     messages, isStreaming, currentStreamContent, ready, freeMode, costToday, godotConnected,
     godotDetectedPath, currentProject, currentGdd, activeTasks, preview,
-    postMessage, addMessage, setStreaming,
+    postMessage, addMessage, setStreaming, setStageModel,
   } = useStore();
   const engineReady = !!godotDetectedPath || godotConnected;
   const [input, setInput] = useState('');
@@ -65,7 +65,10 @@ export function Studio({ onOpenProviders, tab, setTab }: { onOpenProviders: () =
     if (list.length) setAttachments((prev) => [...prev, ...list]);
   }, []);
   const removeAtt = (id: string) => setAttachments((prev) => prev.filter((a) => a.id !== id));
-  const openAtt = (a: Attachment) => { if (a.kind === 'image' || a.kind === 'model') setViewer(a); };
+  const openAtt = (a: Attachment) => {
+    if (a.kind === 'model') { setStageModel({ url: a.url, ext: a.ext, name: a.name }); setTab('stage'); }
+    else if (a.kind === 'image') setViewer(a);
+  };
 
   const pushUser = (content: string) => addMessage({
     id: crypto.randomUUID(), role: 'user', content, timestamp: Date.now(),

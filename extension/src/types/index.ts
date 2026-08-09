@@ -585,6 +585,7 @@ export interface AppState {
   godotBridgeMethod?: GodotBridgeMethod;
   godotDetectedPath?: string;
   godotDetectedVersion?: string;
+  stageModel?: { url: string; ext?: string; name: string } | null;
   currentProject?: GodotProject;
   currentGdd?: GameDesignDocument;
 

@@ -3,15 +3,36 @@
  * Oyun çalışıyorsa web export'u iframe'de gömülü oynatır; değilse
  * projeye göre "Çalıştır/İnşa Et" çağrısı gösterir. (Tesana'daki orta sahne.)
  */
-import React from 'react';
-import { Play, Square, RotateCw, ExternalLink, Gamepad2, Loader2, Cpu } from 'lucide-react';
+import React, { useState } from 'react';
+import { Play, Square, RotateCw, ExternalLink, Gamepad2, Loader2, Cpu, Box, X } from 'lucide-react';
 import { useStore } from '../store.js';
+import { ModelCanvas } from '../components/ModelCanvas.js';
 
 export function StagePane() {
-  const { preview, currentProject, currentGdd, activeTasks, isBuildingAll, postMessage } = useStore();
+  const { preview, currentProject, currentGdd, activeTasks, isBuildingAll, stageModel, setStageModel, postMessage } = useStore();
+  const [autoRotate, setAutoRotate] = useState(true);
   const building = activeTasks.length > 0 || isBuildingAll;
   const hasProject = !!currentProject || !!currentGdd;
   const title = currentGdd?.title ?? currentProject?.name ?? 'Oyun';
+
+  // 3D model önizleme — oyun çalışmıyorken öncelikli göster
+  if (stageModel && !preview.running) {
+    return (
+      <div className="zstage">
+        <div className="zstage-bar">
+          <span className="zstage-title"><Box size={14} strokeWidth={1.9} /> {stageModel.name}</span>
+          <span className="ml-auto flex items-center gap-1.5">
+            <button className={`zicon-btn ${autoRotate ? 'active' : ''}`} title="Otomatik döndür" onClick={() => setAutoRotate((v) => !v)}><RotateCw size={14} strokeWidth={1.8} /></button>
+            <button className="zicon-btn zicon-danger" title="Önizlemeyi kapat" onClick={() => setStageModel(null)}><X size={14} strokeWidth={2} /></button>
+          </span>
+        </div>
+        <div className="zstage-body">
+          <ModelCanvas url={stageModel.url} ext={stageModel.ext} autoRotate={autoRotate} />
+        </div>
+        <div className="zxs zmuted" style={{ padding: '6px 12px', borderTop: '1px solid var(--z-border)' }}>Sürükle: döndür · Kaydır: yakınlaştır · Sağ tık: kaydır</div>
+      </div>
+    );
+  }
 
   return (
     <div className="zstage">

@@ -56,6 +56,7 @@ interface AppActions {
   // Godot
   setGodotConnected: (v: boolean, method?: GodotBridgeMethod) => void;
   setCurrentProject: (p: GodotProject | undefined) => void;
+  setStageModel: (m: { url: string; ext?: string; name: string } | null) => void;
   setCurrentGdd: (gdd: GameDesignDocument | undefined) => void;
 
   // Build
@@ -172,6 +173,7 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
   // Godot
   setGodotConnected: (v, method) => set({ godotConnected: v, godotBridgeMethod: method }),
   setCurrentProject: (p) => set({ currentProject: p }),
+  setStageModel: (m) => set({ stageModel: m }),
   setCurrentGdd: (gdd) => set({ currentGdd: gdd }),
 
   // Build
