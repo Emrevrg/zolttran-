@@ -43,4 +43,4 @@ chore: araç/config değişikliği
 
 ## Lisans
 
-Katkıda bulunarak Apache 2.0 lisansını kabul etmiş olursunuz.
+Katkıda bulunarak AGPL-3.0 license lisansını kabul etmiş olursunuz.
