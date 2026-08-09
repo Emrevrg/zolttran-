@@ -8,6 +8,7 @@ import { useStore } from './store.js';
 import { Studio, type Tab } from './Studio.js';
 import { LeftNav } from './components/LeftNav.js';
 import { ProvidersSheet } from './components/ProvidersSheet.js';
+import { ProjectsSheet } from './components/ProjectsSheet.js';
 import type { ExtensionToWebview } from '../types/index.js';
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
   } = useStore();
 
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [projectsOpen, setProjectsOpen] = useState(false);
   const [tab, setTab] = useState<Tab>('chat');
 
   const handleMessage = useCallback((event: MessageEvent<ExtensionToWebview>) => {
@@ -38,6 +40,11 @@ export default function App() {
       case 'godot-detected':
         hydrate({ godotDetectedPath: msg.payload.path, godotDetectedVersion: msg.payload.version });
         addToast({ message: 'Zolttran Engine hazır — oyunları derleyip oynayabilirsin', type: 'success', duration: 4000 });
+        break;
+      case 'command':
+        if (msg.payload.name === 'new-session') { clearMessages(); setTab('chat'); setSheetOpen(false); setProjectsOpen(false); }
+        else if (msg.payload.name === 'open-settings') setSheetOpen(true);
+        else if (msg.payload.name === 'open-projects') setProjectsOpen(true);
         break;
       case 'provider-status': setProviderStatus(msg.payload.providerId, msg.payload.status === 'ok' ? 'connected' : 'error'); break;
       case 'toast':           addToast({ message: msg.payload.message, type: msg.payload.type, duration: msg.payload.duration }); break;
@@ -62,6 +69,7 @@ export default function App() {
         tab={tab}
         onTab={setTab}
         onNew={onNew}
+        onProjects={() => setProjectsOpen(true)}
         onSettings={() => setSheetOpen(true)}
       />
 
@@ -70,6 +78,7 @@ export default function App() {
       </main>
 
       <ProvidersSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
+      <ProjectsSheet open={projectsOpen} onClose={() => setProjectsOpen(false)} />
 
       {toasts.length > 0 && (
         <div className="ztoast-container">

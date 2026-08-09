@@ -104,6 +104,7 @@ const INITIAL_STATE: AppState = {
   buildResults: {},
   isBuildingAll: false,
   preview: { running: false, port: 8080, wsConnected: false },
+  projects: [],
   activeTab: 'chat',
   sidebarCollapsed: false,
   toasts: [],

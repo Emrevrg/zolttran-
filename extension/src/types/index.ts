@@ -528,6 +528,7 @@ export type WebviewToExtension =
   | { type: 'build-all' }
   | { type: 'deploy'; payload: { platform: Platform; hosting: HostingService } }
   | { type: 'open-file'; payload: { path: string } }
+  | { type: 'open-project'; payload: { path: string } }
   | { type: 'open-external'; payload: { url: string } }
   | { type: 'cancel-agent'; payload: { taskId: string } }
   | { type: 'set-orchestrator-mode'; payload: { mode: OrchestratorMode } }
@@ -546,6 +547,7 @@ export type ExtensionToWebview =
   | { type: 'provider-status'; payload: { providerId: ProviderID; status: 'ok' | 'error'; error?: string } }
   | { type: 'godot-status'; payload: { connected: boolean; method?: GodotBridgeMethod } }
   | { type: 'godot-detected'; payload: { path: string; version: string } }
+  | { type: 'command'; payload: { name: 'new-session' | 'open-settings' | 'open-projects' } }
   | { type: 'error'; payload: { message: string; code?: string } }
   | { type: 'notification'; payload: { level: 'info' | 'warn' | 'error'; message: string } }
   | { type: 'toast'; payload: { message: string; type: 'success' | 'error' | 'info' | 'warning'; duration?: number } };
@@ -586,6 +588,7 @@ export interface AppState {
   godotDetectedPath?: string;
   godotDetectedVersion?: string;
   stageModel?: { url: string; ext?: string; name: string } | null;
+  projects: Array<{ title: string; gameType: string; path: string; ts: number }>;
   currentProject?: GodotProject;
   currentGdd?: GameDesignDocument;
 

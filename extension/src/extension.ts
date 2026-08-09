@@ -15,6 +15,9 @@ import type {
   ProviderID,
   GameType,
   AppState,
+  GodotScene,
+  GodotScript,
+  GodotAsset,
 } from './types/index.js';
 
 import { providerManager }   from './providers/provider-manager.js';
@@ -97,10 +100,11 @@ export function deactivate(): void {
 function registerCommands(context: vscode.ExtensionContext): void {
   const cmds: Array<[string, () => unknown]> = [
     ['zolttran.openPanel',      () => void focusView()],
-    ['zolttran.newGame',        () => { void focusView(); post({ type: 'notification', payload: { level: 'info', message: 'Chat paneline oyununuzu tarif edin!' } }); }],
+    ['zolttran.newGame',        () => { void focusView(); post({ type: 'command', payload: { name: 'new-session' } }); }],
     ['zolttran.buildAll',       () => void handleBuildAll()],
     ['zolttran.runPreview',     () => void handleRunPreview()],
-    ['zolttran.openSettings',   () => { void focusView(); post({ type: 'notification', payload: { level: 'info', message: 'Config sekmesini açın.' } }); }],
+    ['zolttran.openSettings',   () => { void focusView(); post({ type: 'command', payload: { name: 'open-settings' } }); }],
+    ['zolttran.openProjects',   () => { void focusView(); post({ type: 'command', payload: { name: 'open-projects' } }); }],
     ['zolttran.toggleFreeMode', () => void toggleFreeMode(context)],
     ['zolttran.openMemoryBank', () => void openMemoryBank()],
     ['zolttran.runGodotBridge', () => void connectGodotBridge()],
@@ -275,16 +279,13 @@ async function handleMsg(msg: WebviewToExtension, context: vscode.ExtensionConte
 
           deployManager.setProjectPath(result.projectPath);
           memoryBank.setGdd(result.gdd);
-          const project = await godotBridge.readProject(result.projectPath).catch(() => null);
-          post({ type: 'state-update', payload: { currentProject: project ?? { name: path.basename(result.projectPath), path: result.projectPath, godotVersion: '4.3', scenes: [], scripts: [], assets: [], exportPresets: [] }, currentGdd: result.gdd } });
-          post({ type: 'toast', payload: { message: `🎮 Oynanabilir proje üretildi: ${path.basename(result.projectPath)} (${result.filesCreated.length} dosya)`, type: 'success', duration: 6000 } });
+          // currentProject'i üretilen dosyalardan kur (Inspector ağacı köprü olmadan dolsun)
+          const project = buildProjectFromFiles(result.projectPath, result.filesCreated);
+          post({ type: 'state-update', payload: { currentProject: project, currentGdd: result.gdd } });
+          post({ type: 'toast', payload: { message: `Oynanabilir proje üretildi: ${result.gdd.title} (${result.filesCreated.length} dosya)`, type: 'success', duration: 6000 } });
 
-          // Ana sahne dosyasını aç
-          const mainScene = path.join(result.projectPath, 'project.godot');
-          if (fs.existsSync(mainScene)) {
-            const doc = await vscode.workspace.openTextDocument(mainScene);
-            await vscode.window.showTextDocument(doc, vscode.ViewColumn.One);
-          }
+          // Geçmişe kaydet
+          await recordProject(context, { title: result.gdd.title, gameType: result.gameType, path: result.projectPath, ts: Date.now() });
         } catch (err) {
           post({ type: 'error', payload: { message: String(err) } });
         }
@@ -343,6 +344,18 @@ async function handleMsg(msg: WebviewToExtension, context: vscode.ExtensionConte
       await vscode.env.openExternal(vscode.Uri.parse(msg.payload.url));
       break;
 
+    case 'open-project': {
+      const pp = msg.payload.path;
+      if (!fs.existsSync(pp)) { post({ type: 'notification', payload: { level: 'warn', message: 'Proje klasörü bulunamadı (taşınmış olabilir).' } }); break; }
+      deployManager.setProjectPath(pp);
+      const files: string[] = [];
+      const walk = (d: string, depth: number) => { if (depth > 4) return; for (const n of fs.readdirSync(d)) { const fp = path.join(d, n); try { if (fs.statSync(fp).isDirectory()) { if (n !== '.godot') walk(fp, depth + 1); } else files.push(fp); } catch { /* yoksay */ } } };
+      try { walk(pp, 0); } catch { /* yoksay */ }
+      post({ type: 'state-update', payload: { currentProject: buildProjectFromFiles(pp, files) } });
+      post({ type: 'toast', payload: { message: `Proje açıldı: ${path.basename(pp)}`, type: 'info', duration: 2500 } });
+      break;
+    }
+
     case 'cancel-agent':
       taskScheduler.cancel(msg.payload.taskId);
       break;
@@ -378,6 +391,9 @@ function buildSnapshot(): Partial<AppState> {
     costToday: providerManager.getCostToday(),
     costTotal: providerManager.getCostTotal(),
     isBuildingAll: false,
+    projects: ctx?.globalState.get('zolttran.projects', []) ?? [],
+    freeExcluded: ctx?.globalState.get('zolttran.freeExcluded', []) ?? [],
+    godotDetectedPath: (vscode.workspace.getConfiguration('zolttran').get<string>('godotPath', '') || undefined),
     toasts: [],
   };
 }
@@ -613,6 +629,32 @@ function getOutputBase(): string {
   const dir = path.join(os.homedir(), 'ZolttranGames');
   try { fs.mkdirSync(dir, { recursive: true }); } catch { /* yoksay */ }
   return dir;
+}
+
+/** Üretilen dosya listesinden Inspector için GodotProject kurar (köprü gerektirmez). */
+function buildProjectFromFiles(projectPath: string, files: string[]): AppState['currentProject'] {
+  const rel = (f: string) => f.replace(projectPath, '').replace(/^[\\/]/, '').replace(/\\/g, '/');
+  const scenes: GodotScene[] = []; const scripts: GodotScript[] = []; const assets: GodotAsset[] = [];
+  const assetType = (e: string): GodotAsset['type'] =>
+    ['png', 'jpg', 'jpeg', 'webp', 'svg'].includes(e) ? 'texture'
+    : ['glb', 'gltf', 'obj'].includes(e) ? 'model'
+    : ['wav', 'ogg', 'mp3'].includes(e) ? 'sound'
+    : ['gdshader'].includes(e) ? 'shader' : 'other';
+  for (const f of files) {
+    const r = rel(f); const ext = (r.split('.').pop() ?? '').toLowerCase();
+    if (ext === 'tscn') scenes.push({ name: r.split('/').pop() ?? r, path: f, rootNode: { name: 'root', type: 'Node', properties: {}, children: [], groups: [] } as never, resourcePath: `res://${r}` });
+    else if (ext === 'gd') scripts.push({ path: f, language: 'gdscript', content: '', errors: [] });
+    else if (!['godot', 'cfg', 'md', 'gitignore', 'gitkeep', 'import'].includes(ext) && r) assets.push({ path: f, type: assetType(ext), size: 0 });
+  }
+  return { name: path.basename(projectPath), path: projectPath, godotVersion: '4.3', scenes, scripts, assets, exportPresets: [] };
+}
+
+/** Projeyi geçmişe kaydeder (path'e göre tekilleştirir, en fazla 30). */
+async function recordProject(context: vscode.ExtensionContext, meta: { title: string; gameType: string; path: string; ts: number }): Promise<void> {
+  const list = context.globalState.get<Array<typeof meta>>('zolttran.projects', []);
+  const next = [meta, ...list.filter((p) => p.path !== meta.path)].slice(0, 30);
+  await context.globalState.update('zolttran.projects', next);
+  post({ type: 'state-update', payload: { projects: next } });
 }
 
 // ---------------------------------------------------------------------------

@@ -3,18 +3,19 @@
  * hızlı eylemler. Emoji yok; ince çizgi ikonlar.
  */
 import React from 'react';
-import { Sparkles, MessageSquare, MonitorPlay, ListTree, Play, Settings, type LucideIcon } from 'lucide-react';
+import { Sparkles, MessageSquare, MonitorPlay, ListTree, Play, Settings, FolderClock, type LucideIcon } from 'lucide-react';
 import { useStore } from '../store.js';
 import { ZOLTTRAN_MARK } from '../assets/logo.js';
 import type { Tab } from '../Studio.js';
 
-export function LeftNav({ tab, onTab, onNew, onSettings }: {
+export function LeftNav({ tab, onTab, onNew, onProjects, onSettings }: {
   tab: Tab;
   onTab: (t: Tab) => void;
   onNew: () => void;
+  onProjects: () => void;
   onSettings: () => void;
 }) {
-  const { postMessage, preview } = useStore();
+  const { postMessage, preview, projects } = useStore();
 
   return (
     <nav className="znav">
@@ -22,6 +23,7 @@ export function LeftNav({ tab, onTab, onNew, onSettings }: {
       <div className="znav-group">
         <NavBtn icon={Sparkles} label="Yeni oturum" onClick={onNew} />
         <NavBtn icon={MessageSquare} label="Sohbet" active={tab === 'chat'} onClick={() => onTab('chat')} />
+        <NavBtn icon={FolderClock} label={`Projelerim${projects.length ? ` (${projects.length})` : ''}`} onClick={onProjects} />
         <NavBtn icon={MonitorPlay} label="Oyun sahnesi" active={tab === 'stage'} onClick={() => onTab('stage')} />
         <NavBtn icon={ListTree} label="Varlıklar & derleme" active={tab === 'inspect'} onClick={() => onTab('inspect')} />
         <NavBtn icon={Play} label="Önizlemeyi çalıştır" active={preview.running} onClick={() => { postMessage({ type: 'run-preview' }); onTab('stage'); }} />
